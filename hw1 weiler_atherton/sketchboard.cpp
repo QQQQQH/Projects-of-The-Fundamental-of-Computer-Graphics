@@ -63,6 +63,7 @@ void SketchBoard::mouseReleaseEvent(QMouseEvent *e) {
     int num = type == Type::Main ? 0 : 1;
     vector <QPointF> &ps = points[num];
     vector <QLineF> &ls = lines[num];
+
     if (e->button() == Qt::LeftButton) {
         if (lastClick == Qt::RightButton) {
             ps.clear();
@@ -93,7 +94,6 @@ void SketchBoard::on_btnMain_clicked() {
     resPoints.clear();
     resLines.clear();
     qDebug() << "Main";
-    emit set_btnCont(false);
 }
 
 void SketchBoard::on_btnCut_clicked() {
@@ -101,7 +101,6 @@ void SketchBoard::on_btnCut_clicked() {
     resPoints.clear();
     resLines.clear();
     qDebug() << "Cut";
-    emit set_btnCont(false);
 }
 
 void SketchBoard::on_btnDoCut_clicked() {
@@ -139,20 +138,3 @@ void SketchBoard::on_btnDoCut_clicked() {
     }
     type = Type::Result;
 }
-
-void SketchBoard::on_btnCont_clicked() {
-    type = Type::Cut;
-    points[0] = resPoints[0];
-    lines[0] = resLines[0];
-    qDebug() << points[0].size() << "!!!";
-    for (auto p : points[0]) {
-        qDebug() << p;
-    }
-    resPoints.clear();
-    resLines.clear();
-    points[1].clear();
-    lines[1].clear();
-    update();
-    emit set_btnCont(false);
-}
-

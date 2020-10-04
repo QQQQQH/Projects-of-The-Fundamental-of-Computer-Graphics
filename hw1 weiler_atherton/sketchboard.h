@@ -41,12 +41,10 @@ class SketchBoard : public QWidget {
 
   signals:
     void mouse_move(QPointF p);
-    void set_btnCont(bool f);
   public slots:
     void on_btnMain_clicked();
     void on_btnCut_clicked();
     void on_btnDoCut_clicked();
-    void on_btnCont_clicked();
 };
 
 #endif // SKETCHBOARD_H

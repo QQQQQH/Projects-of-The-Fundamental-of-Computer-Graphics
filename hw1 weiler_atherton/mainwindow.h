@@ -20,7 +20,6 @@ class MainWindow : public QMainWindow {
 
   private slots:
     void set_coord_label(QPointF p);
-    void set_btnCont(bool f);
 
   private:
     Ui::MainWindow *ui;

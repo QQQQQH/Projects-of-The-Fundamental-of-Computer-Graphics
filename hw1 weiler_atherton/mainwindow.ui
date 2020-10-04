@@ -58,16 +58,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnCont">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Continue</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>

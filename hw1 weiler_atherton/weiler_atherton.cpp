@@ -26,57 +26,18 @@ bool Weiler_Atherton::cross_at_end(const QLineF line1, const QLineF line2) const
            (line2.x2() - line2.x1()) * (line1.y2() - line2.y1()) == (line2.y2() - line2.y1()) * (line1.x2() - line2.x1());
 }
 
-bool Weiler_Atherton::ray_cross(double x, double y, int linesNum, int lineNum) const {
-    return ray_cross(x, y, points[linesNum], lineNum);
-}
-
-bool Weiler_Atherton::ray_cross(double x, double y, const vector<Point> &ps, int startPt) const {
-    int sz = ps.size();
-    if (x == ps[startPt].x) {
-        if (y < ps[startPt].y) {
-            return false;
-        }
-        int startPt1 = (startPt - 1 + sz) % sz;
-        double x1 = ps[startPt1].x;
-        while (x == x1) {
-            startPt1 = (startPt1 - 1 + sz) % sz;
-            x1 = ps[startPt1].x;
-        }
-        int startPt2 = (startPt + 1) % sz;
-        double x2 = ps[startPt2].x;
-        while (x == x2) {
-            startPt2 = (startPt2 + 1) % sz;
-            x2 = ps[startPt2].x;
-        }
-        if (x < x1 && x < x2 || x > x1 && x > x2) {
-            return false;
-        }
-        return true;
-    }
-
-    if (x == ps[(startPt + 1) % sz].x) {
-        if (y < ps[(startPt + 1) % sz].y) {
-            return false;
-        }
-        int startPt2 = (startPt + 2) % sz;
-        double x1 = ps[startPt].x,
-               x2 = ps[startPt2].x;
-        while (x == x2) {
-            startPt2 = (startPt2 + 1) % sz;
-            x2 = ps[startPt2].x;
-        }
-        if (x < x1 && x < x2 || x > x1 && x > x2) {
-            return false;
-        }
-        return true;
-    }
-
-    if (x > ps[startPt].x && x > ps[(startPt + 1) % sz].x ||
-        x < ps[startPt].x && x < ps[(startPt + 1) % sz].x) {
+bool Weiler_Atherton::ray_cross(double x, double y, const QLineF &l) const {
+    double x1 = l.x1(),
+           y1 = l.y1(),
+           x2 = l.x2(),
+           y2 = l.y2();
+    if (y1 == y2 ||
+        y > y1 && y > y2 ||
+        y < y1 && y < y2) {
         return false;
     }
-    double ty = (x - ps[startPt].x) * (ps[(startPt + 1) % sz].y - ps[startPt].y) / (ps[(startPt + 1) % sz].x - ps[startPt].x) + ps[startPt].y;
-    return y > ty;
+    double tx = (x2 - x1) * (y - y1) / (y2 - y1) + x1;
+    return tx > x;
 }
 
 bool Weiler_Atherton::out_reverse() const {
@@ -90,7 +51,7 @@ bool Weiler_Atherton::out_reverse() const {
                 noCrossAtEnd = false;
                 continue;
             }
-            if (ray_cross(line1.x1(), line1.y1(), 0, j)) {
+            if (ray_cross(line1.x1(), line1.y1(), lines[0][j])) {
                 type = -type;
             }
         }
@@ -124,18 +85,18 @@ bool Weiler_Atherton::get_cross_points(const QLineF &line1, const QLineF &line2,
     return true;
 }
 
-bool Weiler_Atherton::in_polygon(const vector<Point> &plg1, const vector<Point> &plg2) const {
+bool Weiler_Atherton::in_polygon(const vector<Point> &plg1, const vector<QLineF> &plg2) const {
     for (int i = 0, szi = plg1.size(); i < szi; ++i) {
         bool out = true;
         double x = plg1[i].x,
                y = plg1[i].y;
         for (int j = 0, szj = plg2.size(); j < szj; ++j) {
-            const QLineF line(QPointF(plg2[j].x, plg2[j].y), QPointF(plg2[(j + 1) % szj].x, plg2[(j + 1) % szj].y));
-            if (on_segment(x, y, line)) {
+            const QLineF &l = plg2[j];
+            if (on_segment(x, y, l)) {
                 out = false;
                 break;
             }
-            if (ray_cross(x, y, plg2, j)) {
+            if (ray_cross(x, y, l)) {
                 out = !out;
             }
         }
@@ -150,14 +111,14 @@ void Weiler_Atherton::cross_cut() {
     if (noCross) {
         if (out) {
             if (out_reverse()) {
-                cutRes = {{}};
+                cutResPs = {{}};
                 return;
             }
             vector <Point> res;
             for (auto &line : lines[1]) {
                 res.push_back(Point(line.x1(), line.y1()));
             }
-            cutRes.push_back(res);
+            cutResPs.push_back(res);
             return;
         }
         if (out_reverse()) {
@@ -165,10 +126,10 @@ void Weiler_Atherton::cross_cut() {
             for (auto &line : lines[0]) {
                 res.push_back(Point(line.x1(), line.y1()));
             }
-            cutRes.push_back(res);
+            cutResPs.push_back(res);
             return;
         }
-        cutRes = {{}};
+        cutResPs = {{}};
         return;
     }
 
@@ -199,6 +160,9 @@ void Weiler_Atherton::cross_cut() {
         Point *q = p;
         p = p->next[0];
         while (p != start) {
+            if (p->visited) {
+                break;
+            }
             p->visited = true;
             res.push_back(Point(p->x, p->y));
             if (p->type == -1) {
@@ -220,35 +184,53 @@ void Weiler_Atherton::cross_cut() {
             }
         }
         p = q;
-        cutRes.push_back(res);
+        cutResPs.push_back(res);
     }
-    return;
+}
+
+void Weiler_Atherton::get_cut_line() {
+    for (auto &ps : cutResPs) {
+        if (ps.size() < 3) {
+            ps.clear();
+            continue;
+        }
+        for (int i = 0, sz = ps.size() - 1; i < sz; ++i) {
+            QPointF x(ps[i].x, ps[i].y), y(ps[i + 1].x, ps[i + 1].y);
+            cutResLs.push_back(QLineF(x, y));
+        }
+        QPointF x(ps[ps.size() - 1].x, ps[ps.size() - 1].y), y(ps[0].x, ps[0].y);
+        cutResLs.push_back(QLineF(x, y));
+        ps[ps.size() - 1].last = true;
+    }
 }
 
 void Weiler_Atherton::inner_cut() {
-    vector <Point> res;
-    for (int i = 0, szi = cutRes.size(); i < szi; ++i) {
-        for (int j = 0, szj = cutRes[i].size(); j < szj; ++j) {
-            res.push_back(cutRes[i][j]);
-        }
-    }
     for (int i = 0; i < 2; ++i) {
-        int j = 0;
-        while (!points[i][j].last) {
-            ++j;
-        }
-        ++j;
-        while (j < points[i].size()) {
-            vector<Point> innerPs;
-            while (!points[i][j].last) {
-                innerPs.push_back(points[i][j]);
-                ++j;
+        for (int j = 1, szj = polygons[i].size(); j < szj; ++j) {
+            vector<Point> ps;
+            bool hasCross = false;
+            Point *p = polygons[i][j].head;
+            ps.push_back(*p);
+            p = p->next[i];
+            while (p != polygons[i][j].head) {
+                if (p->type == -1 || p->type == 1) {
+                    hasCross = true;
+                    break;
+                }
+                ps.push_back(*p);
+                p = p->next[i];
             }
-            innerPs.push_back(points[i][j]);
-            ++j;
-            if (in_polygon(innerPs, res)) {
-                res.insert(res.end(), innerPs.begin(), innerPs.end());
-                cutRes.push_back(innerPs);
+            if (hasCross || ps.size() < 3) {
+                continue;
+            }
+            if (in_polygon(ps, cutResLs)) {
+                for (int k = 0, sz = ps.size() - 1; k < sz; ++k) {
+                    QPointF x(ps[k].x, ps[k].y), y(ps[k + 1].x, ps[k + 1].y);
+                    cutResLs.push_back(QLineF(x, y));
+                }
+                QPointF x(ps[ps.size() - 1].x, ps[ps.size() - 1].y), y(ps[0].x, ps[0].y);
+                cutResLs.push_back(QLineF(x, y));
+                cutResPs.push_back(ps);
             }
         }
     }
@@ -266,7 +248,7 @@ void Weiler_Atherton::get_cross_points() {
                 noCrossAtEnd = false;
                 continue;
             }
-            if (ray_cross(line1.x1(), line1.y1(), 1, j)) {
+            if (ray_cross(line1.x1(), line1.y1(), lines[1][j])) {
                 type = -type;
             }
             double x, y, d1, d2;
@@ -288,6 +270,7 @@ void Weiler_Atherton::get_cross_points() {
         }
 
         points[0][i].type = type;
+        qDebug() << points[0][i].x << " " << points[0][i].y << " " << points[0][i].type;
     }
 
     for (int i = 0; i < 2; ++i) {
@@ -335,8 +318,10 @@ void Weiler_Atherton::get_cross_points() {
     }
 }
 
-vector<vector <Point>> Weiler_Atherton::weiler_atherton() {
+void Weiler_Atherton::weiler_atherton(vector<vector <Point>> &resPs, vector<QLineF> &resLs) {
     cross_cut();
+    get_cut_line();
     inner_cut();
-    return cutRes;
+    resPs = cutResPs;
+    resLs = cutResLs;
 }

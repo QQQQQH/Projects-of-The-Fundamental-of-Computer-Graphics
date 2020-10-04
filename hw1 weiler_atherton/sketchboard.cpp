@@ -38,23 +38,19 @@ void SketchBoard::paintEvent(QPaintEvent *) {
     }
 
     painter.setPen(QPen(colors[2], 4));
-    for (auto &ls : resLines) {
-        for (const QLineF &l : ls) {
-            painter.drawLine(l);
-        }
+    for (const QLineF &l : resLines) {
+        painter.drawLine(l);
     }
 }
 
 void SketchBoard::mouseReleaseEvent(QMouseEvent *e) {
     if (type == Type::Result) {
-        if (resLines.size() == 1) {
+        if (resPoints.size() == 1) {
             points[0] = resPoints[0];
-            lines[0] = resLines[0];
-            type = Type::Cut;
+            lines[0] = resLines;
+            qDebug() << points[0].size() << "?";
         }
-        else {
-            type = Type::Main;
-        }
+        type = Type::Cut;
         points[1].clear();
         lines[1].clear();
         resPoints.clear();
@@ -125,23 +121,7 @@ void SketchBoard::on_btnDoCut_clicked() {
     qDebug() << "Get cross points";
     wa.get_cross_points();
     qDebug() << "Get cut";
-    resPoints = wa.weiler_atherton();
-    qDebug() << "Done: Get cut";
-    for (auto &ps : resPoints) {
-        if (ps.size() < 3) {
-            ps.clear();
-            continue;
-        }
-        vector <QLineF> ls;
-        for (int i = 0, sz = ps.size() - 1; i < sz; ++i) {
-            QPointF x(ps[i].x, ps[i].y), y(ps[i + 1].x, ps[i + 1].y);
-            ls.push_back(QLineF(x, y));
-        }
-        QPointF x(ps[ps.size() - 1].x, ps[ps.size() - 1].y), y(ps[0].x, ps[0].y);
-        ls.push_back(QLineF(x, y));
-        ps[ps.size() - 1].last = true;
-        resLines.push_back(ls);
-        update();
-    }
+    wa.weiler_atherton(resPoints, resLines);
+    update();
     type = Type::Result;
 }

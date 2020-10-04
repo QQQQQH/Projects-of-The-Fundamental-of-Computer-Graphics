@@ -45,24 +45,25 @@ class Weiler_Atherton {
 
     vector <priority_queue<CrossPoint>> crossPointsOnLine[2];
     vector <Polygon> polygons[2];
-    vector<vector <Point>> cutRes;
+    vector<vector <Point>> cutResPs;
+    vector <QLineF> cutResLs;
 
     bool in_segment(double x, const QLineF &line) const;
     bool on_segment(double x, double y, const QLineF &line) const;
     bool cross_at_end(const QLineF line1, const QLineF line2) const;
-    bool ray_cross(double x, double y, int linesNum, int lineNum) const;
-    bool ray_cross(double x, double y, const vector<Point> &ps, int startPt) const;
+    bool ray_cross(double x, double y, const QLineF &l) const;
     bool out_reverse() const;
     bool get_cross_points(const QLineF &line1, const QLineF &line2, double &x, double &y, double &d1, double &d2) const;
-    bool in_polygon(const vector<Point> &plg1, const vector<Point> &plg2) const;
+    bool in_polygon(const vector<Point> &plg1, const vector<QLineF> &plg2) const;
     void cross_cut();
+    void get_cut_line();
     void inner_cut();
 
   public:
     Weiler_Atherton(const vector<QLineF> &lines1, const vector<QLineF> &lines2,
                     const vector<Point> &points1, const vector<Point> &points2);
     void get_cross_points();
-    vector<vector <Point>> weiler_atherton();
+    void weiler_atherton(vector<vector <Point>> &resPs, vector<QLineF> &resLs);
 };
 
 #endif // WEILER_ATHERTON_H

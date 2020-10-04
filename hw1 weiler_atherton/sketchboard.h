@@ -36,7 +36,7 @@ class SketchBoard : public QWidget {
     vector<vector <Point>> resPoints;
 
     vector <QLineF> lines[2];
-    vector<vector <QLineF>> resLines;
+    vector <QLineF> resLines;
 
     Type type = Type::Main;
 

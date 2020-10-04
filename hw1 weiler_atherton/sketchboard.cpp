@@ -1,6 +1,5 @@
 #include "sketchboard.h"
 #include "ui_sketchboard.h"
-#include "weiler_atherton.h"
 
 #include <QPainter>
 #include <QMouseEvent>
@@ -26,19 +25,21 @@ void SketchBoard::paintEvent(QPaintEvent *) {
     painter.drawRect(rect());
 
     for (int i = 0; i < 2; ++i) {
-        vector <QPointF> &ps = points[i];
-        vector <QLineF> &ls = lines[i];
         painter.setPen(QPen(colors[i], 4));
-        for (QPointF p : ps) {
-            painter.drawPoint(p);
+
+        vector <Point> &ps = points[i];
+        vector <QLineF> &ls = lines[i];
+        for (const Point &p : ps) {
+            painter.drawPoint(QPointF(p.x, p.y));
         }
-        for (QLineF l : ls) {
+        for (const QLineF &l : ls) {
             painter.drawLine(l);
         }
     }
+
     painter.setPen(QPen(colors[2], 4));
     for (auto &ls : resLines) {
-        for (QLineF l : ls) {
+        for (const QLineF &l : ls) {
             painter.drawLine(l);
         }
     }
@@ -60,27 +61,33 @@ void SketchBoard::mouseReleaseEvent(QMouseEvent *e) {
         resLines.clear();
         update();
     }
+
     int num = type == Type::Main ? 0 : 1;
-    vector <QPointF> &ps = points[num];
+
+    vector <Point> &ps = points[num];
     vector <QLineF> &ls = lines[num];
 
     if (e->button() == Qt::LeftButton) {
+        QPointF p = e->pos();
+        ps.push_back(Point(p.x(), p.y()));
         if (lastClick == Qt::RightButton) {
-            ps.clear();
-            ls.clear();
+            startPointNum = ps.size() - 1;
         }
-        lastClick = Qt::LeftButton;
-        ps.push_back(e->pos());
         update();
+        lastClick = Qt::LeftButton;
     }
     else if (e->button() == Qt::RightButton) {
+        if (ps.size() - startPointNum < 3) {
+            return;
+        }
         lastClick = Qt::RightButton;
-        for (int i = 1, sz = ps.size(); i < sz; ++i) {
-            ls.push_back(QLineF(ps[i - 1], ps[i]));
+        for (int i = startPointNum, sz = ps.size() - 1; i < sz; ++i) {
+            QPointF x(ps[i].x, ps[i].y), y(ps[i + 1].x, ps[i + 1].y);
+            ls.push_back(QLineF(x, y));
         }
-        if (ps.size() > 2) {
-            ls.push_back(QLineF(ps[ps.size() - 1], ps[0]));
-        }
+        QPointF x(ps[ps.size() - 1].x, ps[ps.size() - 1].y), y(ps[startPointNum].x, ps[startPointNum].y);
+        ls.push_back(QLineF(x, y));
+        ps[ps.size() - 1].last = true;
         update();
     }
 }
@@ -91,15 +98,21 @@ void SketchBoard::mouseMoveEvent(QMouseEvent *e) {
 
 void SketchBoard::on_btnMain_clicked() {
     type = Type::Main;
+    points[0].clear();
+    lines[0].clear();
     resPoints.clear();
     resLines.clear();
+    update();
     qDebug() << "Main";
 }
 
 void SketchBoard::on_btnCut_clicked() {
     type = Type::Cut;
+    points[1].clear();
+    lines[1].clear();
     resPoints.clear();
     resLines.clear();
+    update();
     qDebug() << "Cut";
 }
 
@@ -107,32 +120,26 @@ void SketchBoard::on_btnDoCut_clicked() {
     if (lines[0].size() < 3 || lines[1].size() < 3) {
         return;
     }
-    for (auto &ls : lines) {
-        qDebug() << ls.size();
-        for (auto line : ls) {
-            qDebug() << line;
-        }
-        qDebug() << "-------";
-    }
     qDebug() << "Do cut";
-    Weiler_Atherton wa(lines[0], lines[1]);
+    Weiler_Atherton wa(lines[0], lines[1], points[0], points[1]);
     qDebug() << "Get cross points";
     wa.get_cross_points();
     qDebug() << "Get cut";
     resPoints = wa.weiler_atherton();
     qDebug() << "Done: Get cut";
     for (auto &ps : resPoints) {
-        for (QPointF &p : ps) {
-            qDebug() << p.x() << " " << p.y();
+        if (ps.size() < 3) {
+            ps.clear();
+            continue;
         }
-        qDebug() << "---";
         vector <QLineF> ls;
-        for (int i = 1, sz = ps.size(); i < sz; ++i) {
-            ls.push_back(QLineF(ps[i - 1], ps[i]));
+        for (int i = 0, sz = ps.size() - 1; i < sz; ++i) {
+            QPointF x(ps[i].x, ps[i].y), y(ps[i + 1].x, ps[i + 1].y);
+            ls.push_back(QLineF(x, y));
         }
-        if (ps.size() > 2) {
-            ls.push_back(QLineF(ps[ps.size() - 1], ps[0]));
-        }
+        QPointF x(ps[ps.size() - 1].x, ps[ps.size() - 1].y), y(ps[0].x, ps[0].y);
+        ls.push_back(QLineF(x, y));
+        ps[ps.size() - 1].last = true;
         resLines.push_back(ls);
         update();
     }

@@ -1,6 +1,8 @@
 #ifndef SKETCHBOARD_H
 #define SKETCHBOARD_H
 
+#include "weiler_atherton.h"
+
 #include <QFrame>
 #include <vector>
 
@@ -28,8 +30,11 @@ class SketchBoard : public QWidget {
 
   private:
     Ui::SketchBoard *ui;
-    vector <QPointF> points[2];
-    vector<vector <QPointF>> resPoints;
+
+    vector <Point> points[2];
+    int startPointNum;
+    vector<vector <Point>> resPoints;
+
     vector <QLineF> lines[2];
     vector<vector <QLineF>> resLines;
 

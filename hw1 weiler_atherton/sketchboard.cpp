@@ -98,6 +98,7 @@ void SketchBoard::on_btnMain_clicked() {
     lines[0].clear();
     resPoints.clear();
     resLines.clear();
+    lastClick = Qt::RightButton;
     update();
     qDebug() << "Main";
 }
@@ -108,6 +109,7 @@ void SketchBoard::on_btnCut_clicked() {
     lines[1].clear();
     resPoints.clear();
     resLines.clear();
+    lastClick = Qt::RightButton;
     update();
     qDebug() << "Cut";
 }
@@ -123,5 +125,18 @@ void SketchBoard::on_btnDoCut_clicked() {
     qDebug() << "Get cut";
     wa.weiler_atherton(resPoints, resLines);
     update();
+    lastClick = Qt::RightButton;
     type = Type::Result;
+}
+
+void SketchBoard::on_btnClear_clicked() {
+    for (int i = 0; i < 2; ++i) {
+        points[i].clear();
+        lines[i].clear();
+    }
+    resPoints.clear();
+    resLines.clear();
+    type = Type::Main;
+    lastClick = Qt::RightButton;
+    update();
 }

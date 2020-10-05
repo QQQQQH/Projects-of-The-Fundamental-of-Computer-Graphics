@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnMain, &QPushButton::clicked, ui->sketchBoard, &SketchBoard::on_btnMain_clicked);
     connect(ui->btnCut, &QPushButton::clicked, ui->sketchBoard, &SketchBoard::on_btnCut_clicked);
     connect(ui->btnDoCut, &QPushButton::clicked, ui->sketchBoard, &SketchBoard::on_btnDoCut_clicked);
+    connect(ui->btnClear, &QPushButton::clicked, ui->sketchBoard, &SketchBoard::on_btnClear_clicked);
     connect(ui->sketchBoard, &SketchBoard::mouse_move, this, &MainWindow::set_coord_label);
 }
 

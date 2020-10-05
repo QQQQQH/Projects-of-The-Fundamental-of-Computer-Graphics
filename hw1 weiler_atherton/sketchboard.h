@@ -50,6 +50,7 @@ class SketchBoard : public QWidget {
     void on_btnMain_clicked();
     void on_btnCut_clicked();
     void on_btnDoCut_clicked();
+    void on_btnClear_clicked();
 };
 
 #endif // SKETCHBOARD_H

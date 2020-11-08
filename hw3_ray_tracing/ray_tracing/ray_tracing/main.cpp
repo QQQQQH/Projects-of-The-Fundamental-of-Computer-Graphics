@@ -11,17 +11,21 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Object.h"
+#include "Model.h"
+
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-Camera camera(glm::vec3(0, 0, 8));
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -38,46 +42,83 @@ int main() {
 		glfwTerminate();
 		return -1;
 	}
-	Shader ourShader("shader.vs", "shader.fs");
 
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
+	Shader lightingShader("object.vs", "object.fs");
+	Shader lightCubeShader("light_cube.vs", "light_cube.fs");
+
+	Model ourModel("model/bun_zipper.ply");
+	Model models[3] = {
+		Model("model/dragon_vrip_res4.ply"),
+		Model("model/bun_zipper_res4.ply"),
+		Model("model/happy_vrip_res4.ply"),
+	};
+	//Model models[3] = {
+	//	Model("model/bun_zipper.ply"),
+	//	Model("model/happy_vrip.ply"),
+	//	Model("model/dragon_vrip.ply")
+	//};
+
+	float vertices[] = {
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+
+		-0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f, -0.5f,
+
+		-0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f, -0.5f,
+	};
+	// first, configure the cube's VAO (and VBO)
+	unsigned int VBO, lightCubeVAO;
+	glGenVertexArrays(1, &lightCubeVAO);
 	glGenBuffers(1, &VBO);
 
-	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	const int radius = 3;
-	Cube scene(glm::vec3(0, 0, 0), glm::vec3(20, 10, 20)),
-		cubeLeft(glm::vec3(-radius, 0, 0)),
-		cubeRight(glm::vec3(radius, 0, 0)),
-		cubeMoving(glm::vec3(0, radius, 0));
-	scene.set_vertices_data();
-	cubeLeft.find_minmax();
-	cubeRight.find_minmax();
+	glBindVertexArray(lightCubeVAO);
 
-	// load and create texture 
-	const int textureNum = 3;
-	unsigned int texture[textureNum];
-	const char* path[textureNum] = {
-	   "texture/wall.jpg",
-	   "texture/container.jpg",
-	   "texture/awesomeface.jpg"
-	};
-	if (!load_texture(textureNum, texture, path)) {
-		glfwTerminate();
-		return -1;
-	}
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, texture[2]);
-	ourShader.use();
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	// note that we update the lamp's position attribute's stride to reflect the updated buffer data
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	glEnableVertexAttribArray(0);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
+		// per-frame time logic
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -86,52 +127,63 @@ int main() {
 		processInput(window);
 
 		// render
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// be sure to activate shader when setting uniforms/drawing objects
+		lightingShader.use();
+		lightingShader.setVec3("light.position", lightPos);
+		lightingShader.setVec3("viewPos", camera.Position);
+
+		// light properties
+		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+		lightingShader.setVec3("light.ambient", ambientColor);
+		lightingShader.setVec3("light.diffuse", diffuseColor);
+		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		// material properties
+		lightingShader.setVec3("material.ambient", 1.0f, 1.0f, 1.0f);
+		lightingShader.setVec3("material.diffuse", 1.0f, 1.0f, 1.0f);
+		lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+		lightingShader.setFloat("material.shininess", 32.0f);
+
+		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-		ourShader.setMat4("projection", projection);
 		glm::mat4 view = camera.GetViewMatrix();
-		ourShader.setMat4("view", view);
+		lightingShader.setMat4("projection", projection);
+		lightingShader.setMat4("view", view);
 
-		// render scene
-		ourShader.setInt("texture0", 0);
-		glm::mat4 model = scene.get_model();
-		ourShader.setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glm::mat4 model = glm::mat4(1.0f);
 
-
-		// render cube
-		ourShader.setInt("texture0", 1);
-
-		model = cubeLeft.get_model();
-		ourShader.setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		model = cubeRight.get_model();
-		ourShader.setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		// render moving cube
-		float roatateTime = currentFrame * 2;
-		float x = radius * cos(roatateTime),
-			y = radius * sin(roatateTime);
-
-		cubeMoving.set_pos(glm::vec3(x, y, 0));
-		cubeMoving.set_rotate(roatateTime);
-		model = cubeMoving.get_model();
-		cubeMoving.find_minmax();
-		if (cubeMoving.check_hit(cubeLeft) || cubeMoving.check_hit(cubeRight)) {
-			ourShader.setInt("texture0", 2);
+		// world transformation
+		for (int i = 0; i < 3; ++i) {
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, glm::vec3(-2 + i * 2, -2, 0));
+			model = glm::scale(model, glm::vec3(5.0f));
+			lightingShader.setMat4("model", model);
+			models[i].Draw(lightingShader);
 		}
-		ourShader.setMat4("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//ourModel.Draw(lightingShader);
 
+		// also draw the lamp object
+		lightCubeShader.use();
+		lightCubeShader.setMat4("projection", projection);
+		lightCubeShader.setMat4("view", view);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+		lightCubeShader.setMat4("model", model);
+
+		glBindVertexArray(lightCubeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &lightCubeVAO);
 	glDeleteBuffers(1, &VBO);
 
 	glfwTerminate();
@@ -214,6 +266,8 @@ GLFWwindow* init_GLFW() {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return nullptr;
 	}
+	// tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 	return window;
 }

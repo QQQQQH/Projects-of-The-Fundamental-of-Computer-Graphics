@@ -3,6 +3,30 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+
+bool Face::in_face(const glm::vec3& p) const {
+	if (glm::dot(p - points[0], norm)) {
+		return false;
+	}
+
+	glm::vec3 vectorToP[3];
+	glm::vec3 crosses[3];
+	for (int i = 0; i < 3; i++) {
+		vectorToP[i] = p - points[i];
+	}
+	for (int i = 0; i < 3; i++) {
+		crosses[i] = glm::normalize(glm::cross(vectorToP[i], vectorToP[(i + 1) % 3]));
+	}
+
+	const float EPS = 1e-5;
+	if (glm::distance(crosses[0], crosses[1]) > EPS ||
+		glm::distance(crosses[1], crosses[2]) > EPS) {
+		return false;
+	}
+	return true;
+}
+
+
 // constructor
 
 Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures) {
@@ -86,4 +110,28 @@ void Mesh::setupMesh() {
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, Bitangent));
 
 	glBindVertexArray(0);
+}
+
+void Mesh::applyModel() {
+	for (auto& vertice : vertices) {
+		glm::vec4 t = model * glm::vec4(vertice.Position, 1.0f);
+		vertice.Position.x = t.x;
+		vertice.Position.y = t.y;
+		vertice.Position.z = t.z;
+	}
+	getFaces();
+}
+
+void Mesh::getFaces() {
+	for (int i = 0, sz = vertices.size(); i < sz; i += 3) {
+		Face face;
+		for (int j = 0; j < 3; ++j) {
+			face.points[j] = vertices[i + j].Position;
+		}
+		auto
+			ab = face.points[1] - face.points[0],
+			ac = face.points[2] - face.points[0];
+		face.norm = glm::normalize(glm::cross(ab, ac));
+		faces.push_back(face);
+	}
 }

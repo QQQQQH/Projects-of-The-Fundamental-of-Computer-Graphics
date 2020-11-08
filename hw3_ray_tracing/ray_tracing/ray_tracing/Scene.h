@@ -8,10 +8,16 @@
 #include <vector>
 
 #include "Object.h"
+#include "Ray.h"
 
 using namespace std;
 
 class Scene {
+	static const int MAX_RECURSION_STEP = 5;
+	static const float INF, EPS;
+
+	tuple<const glm::vec3&, const Object*, const glm::vec3&> get_intersection(const Ray& ray);
+	glm::vec3 shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray);
 public:
 	glm::vec3
 		lightPos = glm::vec3(0.0f, 3.0f, 0.0f),
@@ -22,5 +28,9 @@ public:
 
 	vector<Object*> objects;
 	void add_object(Object* const object);
+	void prepare_for_ray_tracing();
+	glm::vec3 trace_ray(const Ray& ray, unsigned int recursionStep = 0);
 };
+
+
 

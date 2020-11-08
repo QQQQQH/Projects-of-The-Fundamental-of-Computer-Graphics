@@ -32,7 +32,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 GLFWwindow* init_GLFW();
-bool load_texture(unsigned int num, unsigned int* texture, const char* path[]);
 int run1();
 
 int main() {
@@ -72,7 +71,12 @@ int run1() {
 	for (int i = 0; i < 3; ++i) {
 		objects[i] = Object(&models[i]);
 		scene.add_object(&objects[i]);
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-1 + i * 1, 0, 0));
+		model = glm::scale(model, glm::vec3(5.0f));
+		objects[i].set_model_trans(model);
 	}
+	scene.prepare_for_ray_tracing();
 	//Model ourModel("model/bun_zipper.ply");
 	//Model models[3] = {
 	//	Model("model/bun_zipper.ply"),
@@ -176,11 +180,8 @@ int run1() {
 			lightingShader.setVec3("material.diffuse", scene.objects[i]->diffuse);
 			lightingShader.setVec3("material.specular", scene.objects[i]->specular);
 			lightingShader.setFloat("material.shininess", scene.objects[i]->shininess);
-
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(-1 + i * 1, 0, 0));
-			model = glm::scale(model, glm::vec3(5.0f));
-			lightingShader.setMat4("model", model);
+			lightingShader.setMat4("model", objects[i].modelTrans);
+			lightingShader.setMat4("model", glm::mat4(1.0f));
 			models[i].Draw(lightingShader);
 		}
 
@@ -286,28 +287,4 @@ GLFWwindow* init_GLFW() {
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 	return window;
-}
-
-bool load_texture(unsigned int num, unsigned int* texture, const char* path[]) {
-	glGenTextures(num, texture);
-	for (int i = 0; i < num; ++i) {
-		glBindTexture(GL_TEXTURE_2D, texture[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		int width, height, nrChannels;
-		stbi_set_flip_vertically_on_load(true);
-		unsigned char* data = stbi_load(path[i], &width, &height, &nrChannels, 0);
-		if (data) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else {
-			std::cerr << "Failed to load texture!" << std::endl;
-			return false;
-		}
-		stbi_image_free(data);
-	}
-	return true;
 }

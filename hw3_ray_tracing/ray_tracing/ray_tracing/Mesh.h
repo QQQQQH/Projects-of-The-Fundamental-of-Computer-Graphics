@@ -31,17 +31,26 @@ struct Texture {
 	string path;
 };
 
+struct Face {
+	glm::vec3 points[3];
+	glm::vec3 norm;
+	bool in_face(const glm::vec3& p) const;
+};
+
 class Mesh {
 public:
 	// mesh Data
 	vector<Vertex>       vertices;
 	vector<unsigned int> indices;
 	vector<Texture>      textures;
+	vector<Face>		 faces;
 	unsigned int VAO;
+	glm::mat4 model;
 
 	// constructor
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
 
+	void applyModel();
 	// render the mesh
 	void Draw(Shader& shader);
 
@@ -50,6 +59,7 @@ private:
 	unsigned int VBO, EBO;
 
 	// initializes all the buffer objects/arrays
+	void getFaces();
 	void setupMesh();
 };
 #endif

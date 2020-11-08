@@ -9,9 +9,10 @@
 #include <iostream>
 
 #include "Camera.h"
-#include "Shader.h"
-#include "Object.h"
 #include "Model.h"
+#include "Object.h"
+#include "Scene.h"
+#include "Shader.h"
 
 
 const unsigned int SCR_WIDTH = 800;
@@ -24,8 +25,6 @@ bool firstMouse = true;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-glm::vec3 lightPos(0.0f, 3.0f, 0.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -46,12 +45,18 @@ int main() {
 	Shader lightingShader("object.vs", "object.fs");
 	Shader lightCubeShader("light_cube.vs", "light_cube.fs");
 
-	Model ourModel("model/bun_zipper.ply");
 	Model models[3] = {
 		Model("model/dragon_vrip_res4.ply"),
 		Model("model/bun_zipper_res4.ply"),
 		Model("model/happy_vrip_res4.ply"),
 	};
+	Object objects[3];
+	Scene scene;
+	for (int i = 0; i < 3; ++i) {
+		objects[i] = Object(&models[i]);
+		scene.add_object(&objects[i]);
+	}
+	//Model ourModel("model/bun_zipper.ply");
 	//Model models[3] = {
 	//	Model("model/bun_zipper.ply"),
 	//	Model("model/happy_vrip.ply"),
@@ -116,6 +121,17 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
 	glEnableVertexAttribArray(0);
 
+	// be sure to activate shader when setting uniforms/drawing objects
+	lightingShader.use();
+	lightingShader.setVec3("light.position", scene.lightPos);
+	lightingShader.setVec3("viewPos", camera.Position);
+
+	lightingShader.setVec3("light.ambient", scene.ambientColor);
+	lightingShader.setVec3("light.diffuse", scene.diffuseColor);
+	lightingShader.setVec3("light.specular", scene.specularStrength);
+
+	glm::mat4 projection, view, model;
+
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
 		// per-frame time logic
@@ -130,57 +146,41 @@ int main() {
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// be sure to activate shader when setting uniforms/drawing objects
-		lightingShader.use();
-		lightingShader.setVec3("light.position", lightPos);
-		lightingShader.setVec3("viewPos", camera.Position);
-
-		// light properties
-		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-		lightingShader.setVec3("light.ambient", ambientColor);
-		lightingShader.setVec3("light.diffuse", diffuseColor);
-		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
-		// material properties
-		lightingShader.setVec3("material.ambient", 1.0f, 1.0f, 1.0f);
-		lightingShader.setVec3("material.diffuse", 1.0f, 1.0f, 1.0f);
-		lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-		lightingShader.setFloat("material.shininess", 32.0f);
-
 		// view/projection transformations
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
+		projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+		view = camera.GetViewMatrix();
+
+		lightingShader.use();
 		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 
-		glm::mat4 model = glm::mat4(1.0f);
-
-		// world transformation
 		for (int i = 0; i < 3; ++i) {
+			lightingShader.setVec3("material.ambient", scene.objects[i]->ambient);
+			lightingShader.setVec3("material.diffuse", scene.objects[i]->diffuse);
+			lightingShader.setVec3("material.specular", scene.objects[i]->specular);
+			lightingShader.setFloat("material.shininess", scene.objects[i]->shininess);
+
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, glm::vec3(-1 + i * 1, 0, 0));
 			model = glm::scale(model, glm::vec3(5.0f));
 			lightingShader.setMat4("model", model);
 			models[i].Draw(lightingShader);
 		}
-		//ourModel.Draw(lightingShader);
 
-		// also draw the lamp object
+		// draw the lamp object
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+		model = glm::translate(model, scene.lightPos);
+		model = glm::scale(model, glm::vec3(0.2f));
 		lightCubeShader.setMat4("model", model);
 
 		glBindVertexArray(lightCubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
 	}
 
 	glDeleteVertexArrays(1, &lightCubeVAO);

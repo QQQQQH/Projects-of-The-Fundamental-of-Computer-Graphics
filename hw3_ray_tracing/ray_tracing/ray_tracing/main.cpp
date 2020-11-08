@@ -33,8 +33,25 @@ void processInput(GLFWwindow* window);
 
 GLFWwindow* init_GLFW();
 bool load_texture(unsigned int num, unsigned int* texture, const char* path[]);
+int run1();
 
 int main() {
+	while (true) {
+		cout << "Please Select:\n"
+			<< "1. Phong\n"
+			<< "2. Ray Tracing\n"
+			<< "3. Ray Tracing+\n" << endl;
+		string strIn;
+		cin >> strIn;
+		if (strIn == "1") {
+			return run1();
+		}
+		cout << endl;
+	}
+	return 0;
+}
+
+int run1() {
 	// initialization
 	GLFWwindow* window = init_GLFW();
 	if (!window) {
@@ -187,7 +204,6 @@ int main() {
 	glDeleteBuffers(1, &VBO);
 
 	glfwTerminate();
-	return 0;
 }
 
 void processInput(GLFWwindow* window) {

@@ -1,31 +1,43 @@
 #include "Face.h"
 
-bool Face::in_face(const glm::vec3& p) const {
-	if (glm::dot(p - points[0], norm)) {
+
+ostream& operator<<(ostream& out, const glm::vec3& v) {
+	out << "(" << v.x << ", " << v.y << ", " << v.z << ")" << endl;
+	return out;
+}
+
+
+bool Face::on_face(const glm::vec3& P) const {
+	if (glm::dot(norm, P - points[0])) {
+		return false;
+	}
+	const glm::vec3
+		& A = points[0],
+		& B = points[1],
+		& C = points[2];
+
+	glm::vec3
+		v0 = C - A,
+		v1 = B - A,
+		v2 = P - A;
+
+	float dot00 = glm::dot(v0, v0);
+	float dot01 = glm::dot(v0, v1);
+	float dot02 = glm::dot(v0, v2);
+	float dot11 = glm::dot(v1, v1);
+	float dot12 = glm::dot(v1, v2);
+
+	float inverDeno = 1 / (dot00 * dot11 - dot01 * dot01);
+
+	float u = (dot11 * dot02 - dot01 * dot12) * inverDeno;
+	if (u < 0 || u > 1) {
 		return false;
 	}
 
-	glm::vec3 vectorToP[3];
-	glm::vec3 crosses[3];
-	for (int i = 0; i < 3; i++) {
-		vectorToP[i] = p - points[i];
-	}
-
-	const float EPS = 1e-5;
-
-	for (int i = 0; i < 3; i++) {
-		crosses[i] = glm::normalize(glm::cross(vectorToP[i], vectorToP[(i + 1) % 3]));
-		if (crosses[i].x < EPS &&
-			crosses[i].y < EPS &&
-			crosses[i].z < EPS) {
-			return false;
-		}
-	}
-
-	if (
-		glm::distance(crosses[0], crosses[1]) > EPS ||
-		glm::distance(crosses[1], crosses[2]) > EPS) {
+	float v = (dot00 * dot12 - dot01 * dot02) * inverDeno;
+	if (v < 0 || v > 1) {
 		return false;
 	}
-	return true;
+
+	return u + v <= 1;
 }

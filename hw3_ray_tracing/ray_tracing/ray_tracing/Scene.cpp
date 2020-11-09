@@ -12,8 +12,8 @@ tuple<glm::vec3, const Object*, glm::vec3> Scene::get_intersection(const Ray& ra
 		float t = get<0>(intersectRes);
 		if (t < minT) {
 			minT = t;
-			collidedObject = get<1>(intersectRes);
-			norm = get<2>(intersectRes);
+			collidedObject = object;
+			norm = get<1>(intersectRes);
 		}
 	}
 	if (collidedObject) {
@@ -34,10 +34,11 @@ glm::vec3 Scene::shade(const Object& object, const glm::vec3& pos, const glm::ve
 	//glm::vec3 specular = specularStrength * spec * object.specular;
 
 	glm::vec3 reflectDir = glm::reflect(-lightDir, norm);
-	float spec = glm::pow(max(glm::dot(ray.direction, reflectDir), 0.0f), object.shininess);
+	float spec = glm::pow(max(glm::dot(-ray.direction, reflectDir), 0.0f), object.shininess);
 	glm::vec3 specular = specularStrength * spec * object.specular;
 
 	return (ambient + diffuse + specular);
+	//return (ambient);
 }
 
 void Scene::add_object(Object* const object) {

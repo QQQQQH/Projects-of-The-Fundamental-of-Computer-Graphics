@@ -49,7 +49,7 @@ void Model::prepare_for_ray_tracing() {
 	}
 }
 
-tuple<float, const Object*, glm::vec3> Model::get_intersection(const Ray& ray) {
+tuple<float, glm::vec3> Model::get_intersection(const Ray& ray) {
 	float minT = INF;
 	const Face* collidedFace = nullptr;
 	glm::vec3 start = ray.vertex, direction = ray.direction;
@@ -62,7 +62,7 @@ tuple<float, const Object*, glm::vec3> Model::get_intersection(const Ray& ray) {
 				float t = v1 / v2;
 				if (t < minT) {
 					glm::vec3 p = ray.point_at_t(t);
-					if (face.in_face(p)) {
+					if (face.on_face(p)) {
 						minT = t;
 						collidedFace = &face;
 					}
@@ -73,7 +73,7 @@ tuple<float, const Object*, glm::vec3> Model::get_intersection(const Ray& ray) {
 	if (collidedFace) {
 		norm = collidedFace->norm;
 	}
-	return make_tuple(minT, this, norm);
+	return make_tuple(minT, norm);
 }
 
 // draws the model, and thus all its meshes

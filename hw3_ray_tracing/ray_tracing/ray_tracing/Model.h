@@ -32,7 +32,7 @@ public:
 	Model(string const& path, bool gamma = false);
 
 	void prepare_for_ray_tracing();
-	tuple<float, const Object*, glm::vec3> get_intersection(const Ray& ray);
+	tuple<float, glm::vec3> get_intersection(const Ray& ray);
 
 	void Draw(Shader& shader);
 

@@ -20,7 +20,7 @@ const unsigned int SCR_HEIGHT = 600;
 unsigned int NUM_OBJECT;
 
 //Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
-Camera camera(glm::vec3(0.0f, 2.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -30.0f);
+Camera camera(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -44,7 +44,24 @@ void clear();
 int run1(int f);
 int run2(int f);
 
+int test() {
+	Face f;
+	f.points[0] = glm::vec3(-0.5, -0.5, -0.5);
+	f.points[1] = glm::vec3(0.5, -0.5, -0.5);
+	f.points[2] = glm::vec3(0.5, 0.5, -0.5);
+	f.norm = glm::vec3(0, 0, 1);
+	glm::vec3 p(-0.5, -0.5, -100);
+	if (f.on_face(p)) {
+		cout << "Yes" << endl;
+	}
+	else {
+		cout << "No" << endl;
+	}
+	return 0;
+}
+
 int main() {
+	camera.Zoom = 90;
 	while (true) {
 		cout << "Please Select:\n"
 			<< "1. Phong\n"
@@ -64,6 +81,9 @@ int main() {
 		if (strIn == "22") {
 			return run2(2);
 		}
+		else {
+			return test();
+		}
 		cout << endl;
 	}
 	clear();
@@ -80,6 +100,9 @@ bool prepare(int f) {
 	if (f == 1) {
 		NUM_OBJECT = 1;
 		objects[0] = new Cube;
+		glm::mat4 model(1.0f);
+		//model = glm::translate(model, glm::vec3(-1, 0, 0));
+		objects[0]->set_model(model);
 		scene.add_object(objects[0]);
 	}
 	else {
@@ -114,8 +137,6 @@ int run1(int f) {
 	Cube lightCube;
 	Shader objectShader("shader/object.vs", "shader/object.fs");
 	Shader lightCubeShader("shader/light_cube.vs", "shader/light_cube.fs");
-
-
 
 	objectShader.use();
 
@@ -181,10 +202,7 @@ int run2(int f) {
 	if (!prepare(f)) {
 		return -1;
 	}
-
 	scene.prepare_for_ray_tracing();
-
-
 
 	float point[] = { 0,0,0 };
 

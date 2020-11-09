@@ -35,13 +35,13 @@ public:
 	void set_model(const glm::mat4& model0);
 
 	virtual void prepare_for_ray_tracing() = 0;
-	virtual tuple<float, const Object*, glm::vec3> get_intersection(const Ray& ray) = 0;
+	virtual tuple<float, glm::vec3> get_intersection(const Ray& ray) = 0;
 
 	virtual void Draw(Shader& shader) = 0;
 };
 
 class Cube : public Object {
-	static const float vertices[216];
+	static const float vertices[108];
 	void set_up();
 public:
 	unsigned int VAO, VBO;
@@ -49,8 +49,28 @@ public:
 
 	Cube();
 	void prepare_for_ray_tracing();
-	tuple<float, const Object*, glm::vec3> get_intersection(const Ray& ray);
+	tuple<float, glm::vec3> get_intersection(const Ray& ray);
 
 	void Draw(Shader& shader);
 };
+
+class Sphere : public Object {
+public:
+	Sphere(const glm::vec3& center, float radius);
+	bool inSphere(const glm::vec3& p) const;
+	glm::vec3 getCenter() const {
+		return _center;
+	}
+	float getRadius() const {
+		return _radius;
+	}
+
+	float rayCollision(const Ray& ray) const;
+	glm::vec3 calNormal(const glm::vec3& p) const;
+	bool rayInEntity(const Ray& ray) const;
+private:
+	glm::vec3 _center;
+	float _radius;
+};
+
 #endif

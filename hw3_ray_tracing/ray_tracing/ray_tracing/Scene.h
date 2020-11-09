@@ -20,9 +20,9 @@ class Scene {
 	glm::vec3 shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray);
 public:
 	glm::vec3
-		lightPos = glm::vec3(0.0f, 0.75f, 0.0f),
+		lightPos = glm::vec3(0.0f, 2.0f, 0.0f),
 		lightColor = glm::vec3(1.0f, 1.0f, 1.0f),
-		diffuseColor = lightColor * glm::vec3(0.5f), // decrease the influence
+		diffuseColor = lightColor * glm::vec3(0.8f), // decrease the influence
 		ambientColor = diffuseColor * glm::vec3(0.2f), // low influence
 		specularStrength = glm::vec3(1.0f, 1.0f, 1.0f);
 

@@ -8,26 +8,49 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Model.h"
+#include <tuple>
+
+#include "Face.h"
 #include "Ray.h"
+#include "Shader.h"
+
+using namespace std;
 
 class Object {
+protected:
+	const float INF = 100000000.0f, EPS = 1e-7;
 public:
-	Model* model = nullptr;
 	glm::vec3
-		ambient = glm::vec3(1.0f, 1.0f, 1.0f),
-		diffuse = glm::vec3(1.0f, 1.0f, 1.0f),
-		specular = glm::vec3(0.5f, 0.5f, 0.5f);
+		ambient = glm::vec3(1.0f, 0.5f, 0.31f),
+		diffuse = ambient,
+		specular = ambient * glm::vec3(0.5f);
 	float shininess = 32.0;
 	float
-		kShade = 0.6f,
-		kReflect = 0.2f,
-		kRefract = 0.2f,
+		kShade = 1.0f,
+		kReflect = 0.0f,
+		kRefract = 0.0f,
 		refractiveIndex = 1.5f;
-	glm::mat4 modelTrans;
+	glm::mat4 model = glm::mat4(1.0f);
 
-	Object() {}
-	Object(Model* const  model0, glm::mat4 modelTrans0 = glm::mat4(1.0f)) :model(model0), modelTrans(modelTrans0) {}
-	void set_model_trans(glm::mat4 modelTrans0);
+	void set_model(const glm::mat4& model0);
+
+	virtual void prepare_for_ray_tracing() = 0;
+	virtual tuple<float, const Object*, glm::vec3> get_intersection(const Ray& ray) = 0;
+
+	virtual void Draw(Shader& shader) = 0;
+};
+
+class Cube : public Object {
+	static const float vertices[108];
+	void set_up();
+public:
+	unsigned int VAO, VBO;
+	Face faces[12];
+
+	Cube();
+	void prepare_for_ray_tracing();
+	tuple<float, const Object*, glm::vec3> get_intersection(const Ray& ray);
+
+	void Draw(Shader& shader);
 };
 #endif

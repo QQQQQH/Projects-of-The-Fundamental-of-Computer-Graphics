@@ -43,6 +43,39 @@ Model::Model(string const& path, bool gamma) : gammaCorrection(gamma) {
 	loadModel(path);
 }
 
+void Model::prepare_for_ray_tracing() {
+	for (auto& mesh : meshes) {
+		mesh.apply_model(model);
+	}
+}
+
+tuple<float, const Object*, glm::vec3> Model::get_intersection(const Ray& ray) {
+	float minT = INF;
+	const Face* collidedFace = nullptr;
+	glm::vec3 start = ray.vertex, direction = ray.direction;
+	glm::vec3 norm;
+	for (const auto& mesh : meshes) {
+		for (const auto& face : mesh.faces) {
+			float v1 = glm::dot(face.norm, face.points[0] - start);
+			float v2 = glm::dot(face.norm, direction);
+			if (abs(v2) > EPS && v1 / v2 > EPS) { // v2 != 0 && t >= 0
+				float t = v1 / v2;
+				if (t < minT) {
+					glm::vec3 p = ray.point_at_t(t);
+					if (face.in_face(p)) {
+						minT = t;
+						collidedFace = &face;
+					}
+				}
+			}
+		}
+	}
+	if (collidedFace) {
+		norm = collidedFace->norm;
+	}
+	return make_tuple(minT, this, norm);
+}
+
 // draws the model, and thus all its meshes
 
 void Model::Draw(Shader& shader) {

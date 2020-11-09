@@ -17,8 +17,10 @@
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+const unsigned int NUM_OBJECT = 3;
 
-Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
+//Camera camera(glm::vec3(1.0f, 2.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -30.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -26,13 +28,21 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+GLFWwindow* window = nullptr;
+
+Object* objects[NUM_OBJECT];
+Scene scene;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 GLFWwindow* init_GLFW();
+bool prepare();
+void clear();
 int run1();
+int run2();
 
 int main() {
 	while (true) {
@@ -45,111 +55,63 @@ int main() {
 		if (strIn == "1") {
 			return run1();
 		}
+		if (strIn == "2") {
+			return run2();
+		}
 		cout << endl;
 	}
+	clear();
 	return 0;
 }
 
-int run1() {
+bool prepare() {
 	// initialization
-	GLFWwindow* window = init_GLFW();
+	window = init_GLFW();
 	if (!window) {
 		glfwTerminate();
+		return false;
+	}
+
+	objects[0] = new Model("model/dragon_vrip_res4.ply");
+	objects[1] = new Model("model/bun_zipper_res4.ply");
+	objects[2] = new Model("model/happy_vrip_res4.ply");
+	for (int i = 0; i < 3; ++i) {
+		scene.add_object(objects[i]);
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
+		model = glm::scale(model, glm::vec3(10.0f));
+		objects[i]->set_model(model);
+	}
+	return true;
+}
+
+void clear() {
+	for (int i = 0; i < NUM_OBJECT; ++i) {
+		delete objects[i];
+	}
+}
+
+
+int run1() {
+	if (!prepare()) {
 		return -1;
 	}
 
-	Shader lightingShader("object.vs", "object.fs");
-	Shader lightCubeShader("light_cube.vs", "light_cube.fs");
+	Cube lightCube;
+	Shader objectShader("shader/object.vs", "shader/object.fs");
+	Shader lightCubeShader("shader/light_cube.vs", "shader/light_cube.fs");
 
-	Model models[3] = {
-		Model("model/dragon_vrip_res4.ply"),
-		Model("model/bun_zipper_res4.ply"),
-		Model("model/happy_vrip_res4.ply"),
-	};
-	Object objects[3];
-	Scene scene;
-	for (int i = 0; i < 3; ++i) {
-		objects[i] = Object(&models[i]);
-		scene.add_object(&objects[i]);
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(-1 + i * 1, 0, 0));
-		model = glm::scale(model, glm::vec3(5.0f));
-		objects[i].set_model_trans(model);
-	}
-	scene.prepare_for_ray_tracing();
-	//Model ourModel("model/bun_zipper.ply");
-	//Model models[3] = {
-	//	Model("model/bun_zipper.ply"),
-	//	Model("model/happy_vrip.ply"),
-	//	Model("model/dragon_vrip.ply")
-	//};
+	//Cube cube;
+	//objects[0] = &cube;
+	//scene.add_object(&cube);
 
-	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		 0.5f,  0.5f, -0.5f,
-		 0.5f,  0.5f, -0.5f,
-		-0.5f,  0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
+	objectShader.use();
+	objectShader.setVec3("viewPos", camera.Position);
 
-		-0.5f, -0.5f,  0.5f,
-		 0.5f, -0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-		-0.5f, -0.5f,  0.5f,
-
-		-0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f, -0.5f,
-		-0.5f, -0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-
-		 0.5f,  0.5f,  0.5f,
-		 0.5f,  0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-
-		-0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f,  0.5f,
-		 0.5f, -0.5f,  0.5f,
-		-0.5f, -0.5f,  0.5f,
-		-0.5f, -0.5f, -0.5f,
-
-		-0.5f,  0.5f, -0.5f,
-		 0.5f,  0.5f, -0.5f,
-		 0.5f,  0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f, -0.5f,
-	};
-	// first, configure the cube's VAO (and VBO)
-	unsigned int VBO, lightCubeVAO;
-	glGenVertexArrays(1, &lightCubeVAO);
-	glGenBuffers(1, &VBO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindVertexArray(lightCubeVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// note that we update the lamp's position attribute's stride to reflect the updated buffer data
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
-
-	// be sure to activate shader when setting uniforms/drawing objects
-	lightingShader.use();
-	lightingShader.setVec3("light.position", scene.lightPos);
-	lightingShader.setVec3("viewPos", camera.Position);
-
-	lightingShader.setVec3("light.ambient", scene.ambientColor);
-	lightingShader.setVec3("light.diffuse", scene.diffuseColor);
-	lightingShader.setVec3("light.specular", scene.specularStrength);
+	objectShader.setVec3("light.position", scene.lightPos);
+	objectShader.setVec3("light.ambient", scene.ambientColor);
+	objectShader.setVec3("light.diffuse", scene.diffuseColor);
+	objectShader.setVec3("light.specular", scene.specularStrength);
 
 	glm::mat4 projection, view, model;
 
@@ -171,40 +133,99 @@ int run1() {
 		projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
 		view = camera.GetViewMatrix();
 
-		lightingShader.use();
-		lightingShader.setMat4("projection", projection);
-		lightingShader.setMat4("view", view);
+		objectShader.use();
+		objectShader.setMat4("projection", projection);
+		objectShader.setMat4("view", view);
 
-		for (int i = 0; i < 3; ++i) {
-			lightingShader.setVec3("material.ambient", scene.objects[i]->ambient);
-			lightingShader.setVec3("material.diffuse", scene.objects[i]->diffuse);
-			lightingShader.setVec3("material.specular", scene.objects[i]->specular);
-			lightingShader.setFloat("material.shininess", scene.objects[i]->shininess);
-			lightingShader.setMat4("model", objects[i].modelTrans);
-			lightingShader.setMat4("model", glm::mat4(1.0f));
-			models[i].Draw(lightingShader);
+		for (int i = 0; i < NUM_OBJECT; ++i) {
+			objectShader.setVec3("material.ambient", scene.objects[i]->ambient);
+			objectShader.setVec3("material.diffuse", scene.objects[i]->diffuse);
+			objectShader.setVec3("material.specular", scene.objects[i]->specular);
+			objectShader.setFloat("material.shininess", scene.objects[i]->shininess);
+			objectShader.setMat4("model", scene.objects[i]->model);
+			scene.objects[i]->Draw(objectShader);
 		}
 
 		// draw the lamp object
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);
+		lightCubeShader.setVec3("color", scene.lightColor);
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, scene.lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
 		lightCubeShader.setMat4("model", model);
 
-		glBindVertexArray(lightCubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		lightCube.Draw(lightCubeShader);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
 	}
 
-	glDeleteVertexArrays(1, &lightCubeVAO);
-	glDeleteBuffers(1, &VBO);
-
 	glfwTerminate();
+}
+
+int run2() {
+	if (!prepare()) {
+		return -1;
+	}
+
+	scene.prepare_for_ray_tracing();
+
+
+
+	float point[] = { 0,0,0 };
+
+	unsigned int VBO, VAO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	glEnableVertexAttribArray(0);
+
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	Shader shader("shader/ray_tracing.vs", "shader/ray_tracing.fs");
+	shader.use();
+	glBindVertexArray(VAO);
+
+	int cnt = 0;
+	// 枚举屏幕上每一个像素
+	for (unsigned int i = 0; i < SCR_WIDTH; ++i) {
+		for (unsigned int j = 0; j < SCR_HEIGHT; ++j) {
+			// 将像素坐标分量映射到[0, 1]
+			glm::vec3 pos(float(i) * 2 / SCR_WIDTH - 1.0f, float(j) * 2 / SCR_HEIGHT - 1.0f, 0.0f);
+			shader.setVec2("screenPos", glm::vec2(pos.x, pos.y));
+
+			// 计算像素在世界坐标中的位置
+			glm::vec3 globalPos = camera.Position + camera.Front + pos.x * camera.Right * (float(SCR_WIDTH) / SCR_HEIGHT) + pos.y * camera.Up;
+
+			// 计算出光线并进行光线追踪
+			Ray ray(camera.Position, globalPos);
+			glm::vec3 color = scene.trace_ray(ray);
+
+			// 绘制该处的像素
+			shader.setVec3("vertexColor", color);
+			if (color != glm::vec3(0, 0, 0)) {
+				//cout << color.x << ", " << color.y << ", " << color.z << endl;
+				++cnt;
+			}
+			glDrawArrays(GL_POINTS, 0, 1);
+		}
+	}
+	cout << cnt << endl;
+
+	glfwSwapBuffers(window);
+	system("pause");
+	glfwTerminate();
+	return 0;
 }
 
 void processInput(GLFWwindow* window) {
@@ -288,3 +309,4 @@ GLFWwindow* init_GLFW() {
 	glEnable(GL_DEPTH_TEST);
 	return window;
 }
+

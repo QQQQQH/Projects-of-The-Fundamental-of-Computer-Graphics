@@ -3,33 +3,21 @@
 const float Scene::INF = 100000000.0f;
 const float Scene::EPS = 1e-5;
 
-tuple<const glm::vec3&, const Object*, const glm::vec3&> Scene::get_intersection(const Ray& ray) {
+tuple<glm::vec3, const Object*, glm::vec3> Scene::get_intersection(const Ray& ray) {
 	float minT = INF;
 	const Object* collidedObject = nullptr;
-	const Face* collidedFace = nullptr;
-	glm::vec3 start = ray.vertex, direction = ray.direction;
 	glm::vec3 norm, collidedPoint;
-	for (auto object : objects) {
-		const Model* const model = object->model;
-		for (const auto& mesh : model->meshes) {
-			for (const auto& face : mesh.faces) {
-				float v1 = glm::dot(face.points[0] - start, face.norm);
-				float v2 = glm::dot(face.norm, direction);
-				float t = v1 / v2;
-				if (abs(v2) > EPS && v1 / v2 > EPS && t < minT) { // v2 != 0 && t >= 0 && t < minT
-					glm::vec3 p = ray.point_at_t(t);
-					if (face.in_face(p)) {
-						minT = t;
-						collidedObject = object;
-						collidedFace = &face;
-						collidedPoint = p;
-					}
-				}
-			}
+	for (const auto object : objects) {
+		const auto& intersectRes = object->get_intersection(ray);
+		float t = get<0>(intersectRes);
+		if (t < minT) {
+			minT = t;
+			collidedObject = get<1>(intersectRes);
+			norm = get<2>(intersectRes);
 		}
 	}
-	if (collidedFace) {
-		norm = collidedFace->norm;
+	if (collidedObject) {
+		collidedPoint = ray.point_at_t(minT);
 	}
 	return make_tuple(collidedPoint, collidedObject, norm);
 }
@@ -38,11 +26,15 @@ glm::vec3 Scene::shade(const Object& object, const glm::vec3& pos, const glm::ve
 	glm::vec3 ambient = ambientColor * object.ambient;
 
 	glm::vec3 lightDir = glm::normalize(lightPos - pos);
-	float diff = std::max(dot(norm, lightDir), 0.0f);
+	float diff = max(dot(norm, lightDir), 0.0f);
 	glm::vec3 diffuse = diff * diffuseColor * object.diffuse;
 
-	glm::vec3 middle = glm::normalize(-ray.direction + lightDir);
-	float spec = glm::pow(std::max(glm::dot(middle, norm), 0.0f), object.shininess);
+	//glm::vec3 middle = glm::normalize(-ray.direction + lightDir);
+	//float spec = glm::pow(max(glm::dot(middle, norm), 0.0f), object.shininess);
+	//glm::vec3 specular = specularStrength * spec * object.specular;
+
+	glm::vec3 reflectDir = glm::reflect(-lightDir, norm);
+	float spec = glm::pow(max(glm::dot(ray.direction, reflectDir), 0.0f), object.shininess);
 	glm::vec3 specular = specularStrength * spec * object.specular;
 
 	return (ambient + diffuse + specular);
@@ -55,9 +47,7 @@ void Scene::add_object(Object* const object) {
 
 void Scene::prepare_for_ray_tracing() {
 	for (auto& object : objects) {
-		for (auto& mesh : object->model->meshes) {
-			mesh.applyModel();
-		}
+		object->prepare_for_ray_tracing();
 	}
 }
 
@@ -94,33 +84,31 @@ glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
 			shade(*collidedObject, collidedPoint, normal, ray);
 	}
 
-
-	// 计算反射方向
-	glm::vec3 reflectDirection = glm::reflect(ray.direction, normal);
-
 	// 光照强度的第二部分：反射光照强度
 	if (collidedObject->kReflect > EPS) { // > 0
+		// 计算反射方向
+		glm::vec3 reflectDirection = glm::reflect(ray.direction, normal);
+
 		lightIntensity += collidedObject->kReflect *
 			trace_ray(Ray(collidedPoint, collidedPoint + reflectDirection), recursionStep + 1);
 	}
 
-	// 计算折射率
-	float currentIndex = 1.0f;
-	float nextIndex = collidedObject->refractiveIndex;
-	if (inObject) {
-		// 若光线是从物体内部射出的，折射率需要进行交换
-		std::swap(currentIndex, nextIndex);
-	}
-
-	// 计算折射方向
-	glm::vec3 refractDirection = glm::refract(ray.direction, normal, currentIndex / nextIndex);
-
 	// 光照强度的第三部分：折射光照强度
 	if (collidedObject->kRefract > EPS) { // > 0
+		// 计算折射率
+		float currentIndex = 1.0f;
+		float nextIndex = collidedObject->refractiveIndex;
+		if (inObject) {
+			// 若光线是从物体内部射出的，折射率需要进行交换
+			std::swap(currentIndex, nextIndex);
+		}
+
+		// 计算折射方向
+		glm::vec3 refractDirection = glm::refract(ray.direction, normal, currentIndex / nextIndex);
+
 		lightIntensity += collidedObject->kRefract *
 			trace_ray(Ray(collidedPoint, collidedPoint + refractDirection), recursionStep + 1);
 	}
-
 	return lightIntensity;
 }
 

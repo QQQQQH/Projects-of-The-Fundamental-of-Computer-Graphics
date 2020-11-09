@@ -13,10 +13,10 @@
 using namespace std;
 
 class Scene {
-	static const int MAX_RECURSION_STEP = 5;
+	static const int MAX_RECURSION_STEP = 1;
 	static const float INF, EPS;
 
-	tuple<const glm::vec3&, const Object*, const glm::vec3&> get_intersection(const Ray& ray);
+	tuple<glm::vec3, const Object*, glm::vec3> get_intersection(const Ray& ray);
 	glm::vec3 shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray);
 public:
 	glm::vec3

@@ -41,7 +41,7 @@ public:
 };
 
 class Cube : public Object {
-	static const float vertices[108];
+	static const float vertices[216];
 	void set_up();
 public:
 	unsigned int VAO, VBO;

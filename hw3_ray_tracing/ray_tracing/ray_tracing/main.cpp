@@ -17,10 +17,10 @@
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-const unsigned int NUM_OBJECT = 3;
+unsigned int NUM_OBJECT;
 
-Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
-//Camera camera(glm::vec3(1.0f, 2.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -30.0f);
+//Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -30.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -30,7 +30,7 @@ float lastFrame = 0.0f;
 
 GLFWwindow* window = nullptr;
 
-Object* objects[NUM_OBJECT];
+Object* objects[3];
 Scene scene;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -39,10 +39,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 GLFWwindow* init_GLFW();
-bool prepare();
+bool prepare(int f);
 void clear();
-int run1();
-int run2();
+int run1(int f);
+int run2(int f);
 
 int main() {
 	while (true) {
@@ -52,11 +52,17 @@ int main() {
 			<< "3. Ray Tracing+\n" << endl;
 		string strIn;
 		cin >> strIn;
-		if (strIn == "1") {
-			return run1();
+		if (strIn == "11") {
+			return run1(1);
 		}
-		if (strIn == "2") {
-			return run2();
+		if (strIn == "12") {
+			return run1(2);
+		}
+		if (strIn == "21") {
+			return run2(1);
+		}
+		if (strIn == "22") {
+			return run2(2);
 		}
 		cout << endl;
 	}
@@ -64,24 +70,32 @@ int main() {
 	return 0;
 }
 
-bool prepare() {
+bool prepare(int f) {
 	// initialization
 	window = init_GLFW();
 	if (!window) {
 		glfwTerminate();
 		return false;
 	}
-
-	objects[0] = new Model("model/dragon_vrip_res4.ply");
-	objects[1] = new Model("model/bun_zipper_res4.ply");
-	objects[2] = new Model("model/happy_vrip_res4.ply");
-	for (int i = 0; i < 3; ++i) {
-		scene.add_object(objects[i]);
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
-		model = glm::scale(model, glm::vec3(10.0f));
-		objects[i]->set_model(model);
+	if (f == 1) {
+		NUM_OBJECT = 1;
+		objects[0] = new Cube;
+		scene.add_object(objects[0]);
 	}
+	else {
+		NUM_OBJECT = 3;
+		objects[0] = new Model("model/dragon_vrip_res4.ply");
+		objects[1] = new Model("model/bun_zipper_res4.ply");
+		objects[2] = new Model("model/happy_vrip_res4.ply");
+		for (int i = 0; i < 3; ++i) {
+			scene.add_object(objects[i]);
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
+			model = glm::scale(model, glm::vec3(10.0f));
+			objects[i]->set_model(model);
+		}
+	}
+
 	return true;
 }
 
@@ -92,8 +106,8 @@ void clear() {
 }
 
 
-int run1() {
-	if (!prepare()) {
+int run1(int f) {
+	if (!prepare(f)) {
 		return -1;
 	}
 
@@ -101,12 +115,9 @@ int run1() {
 	Shader objectShader("shader/object.vs", "shader/object.fs");
 	Shader lightCubeShader("shader/light_cube.vs", "shader/light_cube.fs");
 
-	//Cube cube;
-	//objects[0] = &cube;
-	//scene.add_object(&cube);
+
 
 	objectShader.use();
-	objectShader.setVec3("viewPos", camera.Position);
 
 	objectShader.setVec3("light.position", scene.lightPos);
 	objectShader.setVec3("light.ambient", scene.ambientColor);
@@ -134,6 +145,7 @@ int run1() {
 		view = camera.GetViewMatrix();
 
 		objectShader.use();
+		objectShader.setVec3("viewPos", camera.Position);
 		objectShader.setMat4("projection", projection);
 		objectShader.setMat4("view", view);
 
@@ -165,8 +177,8 @@ int run1() {
 	glfwTerminate();
 }
 
-int run2() {
-	if (!prepare()) {
+int run2(int f) {
+	if (!prepare(f)) {
 		return -1;
 	}
 

@@ -17,10 +17,10 @@
 #include "Shader.h"
 
 
-//const unsigned int SCR_WIDTH = 1920;
-//const unsigned int SCR_HEIGHT = 1080;
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
+//const unsigned int SCR_WIDTH = 800;
+//const unsigned int SCR_HEIGHT = 600;
 glm::vec3 screenColor[SCR_WIDTH][SCR_HEIGHT];
 
 //Camera camera(glm::vec3(0.0f, 2.0f, 3.0f));
@@ -37,6 +37,10 @@ GLFWwindow* window = nullptr;
 
 vector <Object*> objects;
 Scene scene;
+
+Material
+floorMaterial(glm::vec3(1.0f), 32.0f, 0.6f, 0.4f, 0.0f),
+itemMaterial(glm::vec3(1.0f, 0.5f, 0.31f), 32.0f, 1.0f, 0.0f, 0.0f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -91,28 +95,23 @@ bool prepare(int f) {
 
 	glm::mat4 model(1.0f);
 
-	objects.push_back(new Plane);
+	objects.push_back(new Plane(floorMaterial));
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 	model = glm::scale(model, glm::vec3(20.0f));
 	objects[0]->set_model(model);
-	objects[0]->ambient = glm::vec3(1.0f, 1.0f, 1.0f);
-	objects[0]->diffuse = objects[0]->ambient;
-	objects[0]->specular = objects[0]->ambient * glm::vec3(0.5f);
-	objects[0]->kShade = 0.6f;
-	objects[0]->kReflect = 0.4f,
-		scene.add_object(objects[0]);
+	scene.add_object(objects[0]);
 
 	if (f == 1) {
-		objects.push_back(new Cube);
+		objects.push_back(new Cube(itemMaterial));
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
 		objects[1]->set_model(model);
 		scene.add_object(objects[1]);
 	}
 	else {
-		//objects.push_back(new Model("model/dragon_vrip.ply"));
-		//objects.push_back(new Model("model/bun_zipper.ply"));
-		//objects.push_back(new Model("model/happy_vrip.ply"));
+		//objects.push_back(new Model("model/dragon_vrip.ply", itemMaterial));
+		//objects.push_back(new Model("model/bun_zipper.ply", itemMaterial));
+		//objects.push_back(new Model("model/happy_vrip.ply", itemMaterial));
 		//for (int i = 1, sz = objects.size(); i < sz; ++i) {
 		//	glm::mat4 model = glm::mat4(1.0f);
 		//	model = glm::translate(model, glm::vec3(-4 + i * 2, 0.0f, 0.0f));
@@ -121,7 +120,7 @@ bool prepare(int f) {
 		//	scene.add_object(objects[i]);
 		//}
 
-		objects.push_back(new Model("model/happy_vrip.ply"));
+		objects.push_back(new Model("model/bun_zipper_res4.ply", itemMaterial));
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0, 0.0f));
 		model = glm::scale(model, glm::vec3(10.0f));
@@ -145,7 +144,7 @@ int run1(int f) {
 		return -1;
 	}
 
-	Cube lightCube;
+	Cube lightCube(itemMaterial);
 	Shader objectShader("shader/object.vs", "shader/object.fs");
 	Shader lightCubeShader("shader/light_cube.vs", "shader/light_cube.fs");
 
@@ -177,10 +176,10 @@ int run1(int f) {
 		objectShader.setMat4("view", view);
 
 		for (const auto& object : objects) {
-			objectShader.setVec3("material.ambient", object->ambient);
-			objectShader.setVec3("material.diffuse", object->diffuse);
-			objectShader.setVec3("material.specular", object->specular);
-			objectShader.setFloat("material.shininess", object->shininess);
+			objectShader.setVec3("material.ambient", object->ambient());
+			objectShader.setVec3("material.diffuse", object->diffuse());
+			objectShader.setVec3("material.specular", object->specular());
+			objectShader.setFloat("material.shininess", object->shininess());
 			objectShader.setMat4("model", object->model);
 			object->Draw(objectShader);
 		}

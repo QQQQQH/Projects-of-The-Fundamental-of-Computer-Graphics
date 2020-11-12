@@ -29,7 +29,7 @@ public:
 	string directory;
 	bool gammaCorrection;
 
-	Model(string const& path, bool gamma = false);
+	Model(string const& path, const Material& material0, bool gamma = false);
 
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;

@@ -12,36 +12,41 @@
 #include <vector>
 
 #include "Face.h"
+#include "Material.h"
 #include "Ray.h"
 #include "Shader.h"
 
 using namespace std;
 
+
+
 class Object {
 protected:
 	static const float INF, EPS;
-	int cnt = 0;
+	const Material material;
 	glm::vec3 maxv = glm::vec3(-INF), minv = glm::vec3(INF);
 
 	void find_minmax();
 public:
-	glm::vec3
-		ambient = glm::vec3(1.0f, 0.5f, 0.31f),
-		diffuse = ambient,
-		specular = ambient * glm::vec3(0.5f);
-	float shininess = 32.0;
-	float
-		kShade = 1.0f,
-		kReflect = 0.0f,
-		kRefract = 0.0f,
-		refractiveIndex = 1.5f;
 	glm::mat4 model = glm::mat4(1.0f);
-
 	vector<Face> faces;
+
+	Object() {}
+	Object(const Material& material0) :material(material0) {}
+
+	glm::vec3 ambient() const { return material.ambient; }
+	glm::vec3 diffuse() const { return material.ambient; }
+	glm::vec3 specular() const { return material.specular; }
+	float shininess() const { return material.shininess; }
+	float kShade() const { return material.kShade; }
+	float kReflect() const { return material.kReflect; }
+	float kRefract() const { return material.kRefract; }
+	float refractiveIndex() const { return material.refractiveIndex; }
 
 	void set_model(const glm::mat4& model0);
 	bool intersect_AABB(const Ray& ray) const;
 	bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm);
+	bool intersected(const Ray& ray) const;
 
 	virtual void prepare_for_ray_tracing() = 0;
 	virtual void Draw(Shader& shader) const = 0;
@@ -51,7 +56,7 @@ class Cube : public Object {
 	static const float vertices[216];
 	unsigned int VAO, VBO;
 public:
-	Cube();
+	Cube(const Material& material0);
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
 };
@@ -61,7 +66,7 @@ class Plane :public Object {
 	unsigned int VAO, VBO;
 
 public:
-	Plane();
+	Plane(const Material& material0);
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
 };

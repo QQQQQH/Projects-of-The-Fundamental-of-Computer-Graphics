@@ -39,7 +39,7 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
 
 // constructor, expects a filepath to a 3D model.
 
-Model::Model(string const& path, bool gamma) : gammaCorrection(gamma) {
+Model::Model(string const& path, const Material& material0, bool gamma) : Object(material0), gammaCorrection(gamma) {
 	loadModel(path);
 }
 

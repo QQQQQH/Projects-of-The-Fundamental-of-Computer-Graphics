@@ -1,6 +1,6 @@
 #include "Object.h"
 
-const float Object::INF = 100000000.0f, Object::EPS = 1e-7;
+const float Object::INF = 100000000.0f, Object::EPS = 1e-5;
 
 void Object::find_minmax() {
 	for (const auto& face : faces) {
@@ -47,7 +47,7 @@ bool Object::intersect_AABB(const Ray& ray) const {
 		else {
 			t = (maxv.x - src.x) / dir.x;
 		}
-		if (t > 0) {
+		if (t >= 0) {
 			p = ray.point_at_t(t);
 			if (miny <= p.y && maxy >= p.y && minz <= p.z && maxz >= p.z) {
 				return true;
@@ -63,7 +63,7 @@ bool Object::intersect_AABB(const Ray& ray) const {
 		else {
 			t = (maxv.y - src.y) / dir.y;
 		}
-		if (t > 0) {
+		if (t >= 0) {
 			p = ray.point_at_t(t);
 			if (minx <= p.x && maxx >= p.x && minz <= p.z && maxz >= p.z) {
 				return true;
@@ -79,7 +79,7 @@ bool Object::intersect_AABB(const Ray& ray) const {
 		else {
 			t = (maxv.z - src.z) / dir.z;
 		}
-		if (t > 0) {
+		if (t >= 0) {
 			p = ray.point_at_t(t);
 			if (miny <= p.y && maxy >= p.y && minx <= p.x && maxx >= p.x) {
 				return true;
@@ -116,5 +116,25 @@ bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) {
 		}
 	}
 	return intersect;
+}
+
+bool Object::intersected(const Ray& ray) const {
+	float t, v1, v2;
+	glm::vec3 src = ray.src, dir = ray.dir, p;
+	for (const auto& face : faces) {
+		v1 = glm::dot(face.norm, face.points[0] - src);
+		v2 = glm::dot(face.norm, dir);
+		if (abs(v2) > EPS) { // v2 != 0
+			t = v1 / v2;
+			if (t > EPS) {
+				p = ray.point_at_t(t);
+				bool onFace = face.on_face(p);
+				if (onFace) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
 }
 

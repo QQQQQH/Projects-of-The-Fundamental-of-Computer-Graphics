@@ -1,7 +1,7 @@
 #include "Object.h"
 
 
-Cube::Cube() {
+Cube::Cube(const Material& material0) : Object(material0) {
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 

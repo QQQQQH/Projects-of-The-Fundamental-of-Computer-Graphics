@@ -17,12 +17,15 @@
 #include "Shader.h"
 
 
+//const unsigned int SCR_WIDTH = 1920;
+//const unsigned int SCR_HEIGHT = 1080;
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 glm::vec3 screenColor[SCR_WIDTH][SCR_HEIGHT];
 
-//Camera camera(glm::vec3(0.0f, 2.0f, 5.0f));
-Camera camera(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
+//Camera camera(glm::vec3(0.0f, 2.0f, 3.0f));
+//Camera camera(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
+Camera camera(glm::vec3(0.0f, 3.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -45.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -85,29 +88,45 @@ bool prepare(int f) {
 		glfwTerminate();
 		return false;
 	}
+
+	glm::mat4 model(1.0f);
+
+	objects.push_back(new Plane);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(20.0f));
+	objects[0]->set_model(model);
+	objects[0]->ambient = glm::vec3(1.0f, 1.0f, 1.0f);
+	objects[0]->diffuse = objects[0]->ambient;
+	objects[0]->specular = objects[0]->ambient * glm::vec3(0.5f);
+	objects[0]->kShade = 0.6f;
+	objects[0]->kReflect = 0.4f,
+		scene.add_object(objects[0]);
+
 	if (f == 1) {
 		objects.push_back(new Cube);
-		glm::mat4 model(1.0f);
-		objects[0]->set_model(model);
-		scene.add_object(objects[0]);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
+		objects[1]->set_model(model);
+		scene.add_object(objects[1]);
 	}
 	else {
-		objects.push_back(new Model("model/dragon_vrip.ply"));
-		objects.push_back(new Model("model/bun_zipper.ply"));
-		objects.push_back(new Model("model/happy_vrip.ply"));
-		for (int i = 0, sz = objects.size(); i < sz; ++i) {
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
-			model = glm::scale(model, glm::vec3(10.0f));
-			objects[i]->set_model(model);
-			scene.add_object(objects[i]);
-		}
-
+		//objects.push_back(new Model("model/dragon_vrip.ply"));
 		//objects.push_back(new Model("model/bun_zipper.ply"));
-		//glm::mat4 model(1.0f);
-		//model = glm::scale(model, glm::vec3(10.0f));
-		//objects[0]->set_model(model);
-		//scene.add_object(objects[0]);
+		//objects.push_back(new Model("model/happy_vrip.ply"));
+		//for (int i = 1, sz = objects.size(); i < sz; ++i) {
+		//	glm::mat4 model = glm::mat4(1.0f);
+		//	model = glm::translate(model, glm::vec3(-4 + i * 2, 0.0f, 0.0f));
+		//	model = glm::scale(model, glm::vec3(10.0f));
+		//	objects[i]->set_model(model);
+		//	scene.add_object(objects[i]);
+		//}
+
+		objects.push_back(new Model("model/happy_vrip.ply"));
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0, 0.0f));
+		model = glm::scale(model, glm::vec3(10.0f));
+		objects[1]->set_model(model);
+		scene.add_object(objects[1]);
 	}
 
 	return true;
@@ -218,13 +237,14 @@ int run2(int f, bool speedUp) {
 
 	int cnt = 0;
 
-	cout << omp_get_max_threads() << endl;
+	cout << "thread num= " << omp_get_max_threads() << endl;
 	double time[12];
 	int threadCnt[12];
 	for (int i = 0; i < 12; ++i) {
 		time[i] = threadCnt[i] = 0;
 	}
-#pragma omp parallel for
+
+#pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < SCR_WIDTH; ++i) {
 		clock_t t1 = clock();
 		for (int j = 0; j < SCR_HEIGHT; ++j) {
@@ -255,7 +275,7 @@ int run2(int f, bool speedUp) {
 		}
 	}
 
-	cout << "cnt= " << cnt << endl;
+	cout << "color cnt= " << cnt << endl;
 	cout << "time= " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl;
 	for (int i = 0; i < 12; ++i) {
 		cout << i << ". time= " << time[i] << ", threadCnt= " << threadCnt[i] << endl;

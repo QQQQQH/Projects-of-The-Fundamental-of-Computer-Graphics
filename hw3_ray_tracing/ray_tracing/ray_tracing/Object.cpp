@@ -31,6 +31,13 @@ bool Object::intersect_AABB(const Ray& ray) const {
 	float t;
 	glm::vec3 p;
 	const glm::vec3& src = ray.src, & dir = ray.dir;
+	float
+		minx = minv.x - EPS,
+		miny = minv.y - EPS,
+		minz = minv.z - EPS,
+		maxx = maxv.x + EPS,
+		maxy = maxv.y + EPS,
+		maxz = maxv.z + EPS;
 
 	// x
 	if (abs(dir.x) > EPS) {
@@ -42,7 +49,7 @@ bool Object::intersect_AABB(const Ray& ray) const {
 		}
 		if (t > 0) {
 			p = ray.point_at_t(t);
-			if (minv.y <= p.y && maxv.y >= p.y && minv.z <= p.z && maxv.z >= p.z) {
+			if (miny <= p.y && maxy >= p.y && minz <= p.z && maxz >= p.z) {
 				return true;
 			}
 		}
@@ -58,7 +65,7 @@ bool Object::intersect_AABB(const Ray& ray) const {
 		}
 		if (t > 0) {
 			p = ray.point_at_t(t);
-			if (minv.x <= p.x && maxv.x >= p.x && minv.z <= p.z && maxv.z >= p.z) {
+			if (minx <= p.x && maxx >= p.x && minz <= p.z && maxz >= p.z) {
 				return true;
 			}
 		}
@@ -74,12 +81,11 @@ bool Object::intersect_AABB(const Ray& ray) const {
 		}
 		if (t > 0) {
 			p = ray.point_at_t(t);
-			if (minv.y <= p.y && maxv.y >= p.y && minv.x <= p.x && maxv.x >= p.x) {
+			if (miny <= p.y && maxy >= p.y && minx <= p.x && maxx >= p.x) {
 				return true;
 			}
 		}
 	}
-
 	return false;
 }
 
@@ -96,7 +102,7 @@ bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) {
 		v2 = glm::dot(face.norm, dir);
 		if (abs(v2) > EPS) { // v2 != 0
 			t = v1 / v2;
-			if (t > -EPS && t < minT) {
+			if (t > EPS && t < minT) {
 				p = ray.point_at_t(t);
 				bool onFace = face.on_face(p, u, v);
 				//bool onFace = face.on_face(p);
@@ -111,107 +117,4 @@ bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) {
 	}
 	return intersect;
 }
-
-void Cube::set_up() {
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
-	// normal attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindVertexArray(0);
-}
-
-Cube::Cube() {
-	set_up();
-}
-
-void Cube::prepare_for_ray_tracing() {
-	for (int i = 0; i < 12; ++i) {
-		faces.push_back(Face());
-		for (int j = 0; j < 3; ++j) {
-			glm::vec4 t = model * glm::vec4(
-				vertices[i * 18 + j * 6],
-				vertices[i * 18 + j * 6 + 1],
-				vertices[i * 18 + j * 6 + 2], 1.0f);
-			faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
-			faces[i].norms[j] = glm::vec3(
-				vertices[i * 18 + j * 6 + 3],
-				vertices[i * 18 + j * 6 + 4],
-				vertices[i * 18 + j * 6 + 5]);
-		}
-		auto
-			ab = faces[i].points[1] - faces[i].points[0],
-			ac = faces[i].points[2] - faces[i].points[0];
-		faces[i].norm = glm::normalize(glm::cross(ab, ac));
-	}
-	find_minmax();
-}
-
-void Cube::Draw(Shader& shader) const {
-	shader.use();
-	glBindVertexArray(VAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-}
-
-
-const float Cube::vertices[216] = {
-	// front
-	-1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	 1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	 1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-	-1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-
-	// back
-	 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
-
-	 // left
-	 -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-	 -1.0f, -1.0f,  1.0f, -1.0f, 0.0f, 0.0f,
-	 -1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f,
-	 -1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f,
-	 -1.0f,  1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-	 -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
-
-	 // right
-	 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f,
-	 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
-	 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
-	 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
-	 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f,
-	 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f,
-
-	 // top
-	 -1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
-	  1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
-	  1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-	  1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-	 -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-	 -1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
-
-	 // down
-	 -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
-	  1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
-	  1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f,
-	  1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f,
-	 -1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f,
-	 -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
-};
 

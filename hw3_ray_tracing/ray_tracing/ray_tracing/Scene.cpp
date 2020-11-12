@@ -19,6 +19,9 @@ bool Scene::get_intersection(const Ray& ray, const Object*& collidedObject, glm:
 	if (collidedObject) {
 		collidedPoint = ray.point_at_t(minT);
 		intersect = true;
+		//if (glm::dot(ray.dir, norm) > 0)
+		//	cout << minT << endl <<
+		//	collidedPoint << ray.src << ray.dir << norm << collidedObject->faces.size() << endl << endl;
 	}
 	return intersect;
 }
@@ -27,6 +30,7 @@ glm::vec3 Scene::shade(const Object& object, const glm::vec3& pos, const glm::ve
 	glm::vec3 ambient = ambientColor * object.ambient;
 
 	glm::vec3 lightDir = glm::normalize(lightPos - pos);
+	//glm::vec3 lightDir = glm::normalize(glm::vec3(0, 1, 0));
 	float diff = max(dot(norm, lightDir), 0.0f);
 	glm::vec3 diffuse = diff * diffuseColor * object.diffuse;
 
@@ -91,7 +95,6 @@ glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
 	if (collidedObject->kReflect > EPS) { // > 0
 		// 计算反射方向
 		glm::vec3 reflectDirection = glm::reflect(ray.dir, norm);
-
 		lightIntensity += collidedObject->kReflect *
 			trace_ray(Ray(collidedPoint, collidedPoint + reflectDirection), recursionStep + 1);
 	}

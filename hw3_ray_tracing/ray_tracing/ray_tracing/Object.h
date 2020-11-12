@@ -31,8 +31,8 @@ public:
 		specular = ambient * glm::vec3(0.5f);
 	float shininess = 32.0;
 	float
-		kShade = 0.8f,
-		kReflect = 0.2f,
+		kShade = 1.0f,
+		kReflect = 0.0f,
 		kRefract = 0.0f,
 		refractiveIndex = 1.5f;
 	glm::mat4 model = glm::mat4(1.0f);
@@ -49,13 +49,20 @@ public:
 
 class Cube : public Object {
 	static const float vertices[216];
-	void set_up();
-public:
 	unsigned int VAO, VBO;
-
+public:
 	Cube();
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
 };
 
+class Plane :public Object {
+	static const float vertices[36];
+	unsigned int VAO, VBO;
+
+public:
+	Plane();
+	void prepare_for_ray_tracing();
+	void Draw(Shader& shader) const;
+};
 #endif

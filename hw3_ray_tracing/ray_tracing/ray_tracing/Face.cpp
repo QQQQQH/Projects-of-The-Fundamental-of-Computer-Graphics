@@ -1,5 +1,6 @@
 #include "Face.h"
 
+const float Face::EPS = 1e-7;
 ostream& operator<<(ostream& out, const glm::vec3& v) {
 	out << "(" << v.x << ", " << v.y << ", " << v.z << ")" << endl;
 	return out;
@@ -25,15 +26,15 @@ bool Face::on_face(const glm::vec3& P) const {
 	float inverDeno = 1 / (dot00 * dot11 - dot01 * dot01);
 
 	float u = (dot11 * dot02 - dot01 * dot12) * inverDeno;
-	if (u < 0 || u > 1) {
+	if (u < EPS || u > 1 + EPS) {
 		return false;
 	}
 
 	float v = (dot00 * dot12 - dot01 * dot02) * inverDeno;
-	if (v < 0 || v > 1) {
+	if (v < EPS || v > 1 + EPS) {
 		return false;
 	}
-	return u + v <= 1;
+	return u + v <= 1 + EPS;
 
 }
 
@@ -59,7 +60,7 @@ bool Face::on_face(const glm::vec3& P, float& u, float& v) const {
 	float inverDeno = 1 / (dot00 * dot11 - dot01 * dot01);
 
 	u = (dot11 * dot02 - dot01 * dot12) * inverDeno;
-	if (u < 0 || u > 1) {
+	if (u < -EPS || u > 1) {
 		return false;
 	}
 

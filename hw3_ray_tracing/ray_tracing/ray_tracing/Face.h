@@ -11,6 +11,7 @@ using namespace std;
 ostream& operator<<(ostream& out, const glm::vec3& v);
 
 class Face {
+	static const float EPS;
 public:
 	glm::vec3 points[3];
 	glm::vec3 norms[3];

@@ -1,5 +1,6 @@
 #include "Face.h"
 
+const float Face::EPS = 1e-7;
 
 ostream& operator<<(ostream& out, const glm::vec3& v) {
 	out << "(" << v.x << ", " << v.y << ", " << v.z << ")" << endl;
@@ -8,9 +9,6 @@ ostream& operator<<(ostream& out, const glm::vec3& v) {
 
 
 bool Face::on_face(const glm::vec3& P) const {
-	if (glm::dot(norm, P - points[0])) {
-		return false;
-	}
 	const glm::vec3
 		& A = points[0],
 		& B = points[1],
@@ -38,6 +36,5 @@ bool Face::on_face(const glm::vec3& P) const {
 	if (v < 0 || v > 1) {
 		return false;
 	}
-
 	return u + v <= 1;
 }

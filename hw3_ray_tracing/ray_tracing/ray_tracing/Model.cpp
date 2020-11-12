@@ -45,42 +45,29 @@ Model::Model(string const& path, bool gamma) : gammaCorrection(gamma) {
 
 void Model::prepare_for_ray_tracing() {
 	for (auto& mesh : meshes) {
-		mesh.apply_model(model);
-	}
-}
-
-tuple<float, glm::vec3> Model::get_intersection(const Ray& ray) {
-	float minT = INF;
-	const Face* collidedFace = nullptr;
-	glm::vec3 start = ray.vertex, direction = ray.direction;
-	glm::vec3 norm;
-	for (const auto& mesh : meshes) {
-		for (const auto& face : mesh.faces) {
-			float v1 = glm::dot(face.norm, face.points[0] - start);
-			float v2 = glm::dot(face.norm, direction);
-			if (abs(v2) > EPS && v1 / v2 > EPS) { // v2 != 0 && t >= 0
-				float t = v1 / v2;
-				if (t < minT) {
-					glm::vec3 p = ray.point_at_t(t);
-					if (face.on_face(p)) {
-						minT = t;
-						collidedFace = &face;
-					}
-				}
+		for (int i = 0; i < mesh.indices.size() / 3; ++i) {
+			faces.push_back(Face());
+			for (int j = 0; j < 3; ++j) {
+				const glm::vec3& v = mesh.vertices[mesh.indices[i * 3 + j]].Position;
+				glm::vec4 t = model * glm::vec4(
+					v.x, v.y, v.z, 1.0f);
+				faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
 			}
+			auto
+				ab = faces[i].points[1] - faces[i].points[0],
+				ac = faces[i].points[2] - faces[i].points[0];
+			faces[i].norm = glm::normalize(glm::cross(ab, ac));
 		}
 	}
-	if (collidedFace) {
-		norm = collidedFace->norm;
-	}
-	return make_tuple(minT, norm);
+	find_minmax();
 }
 
 // draws the model, and thus all its meshes
 
-void Model::Draw(Shader& shader) {
-	for (unsigned int i = 0; i < meshes.size(); i++)
-		meshes[i].Draw(shader);
+void Model::Draw(Shader& shader) const {
+	for (const auto& mesh : meshes) {
+		mesh.Draw(shader);
+	}
 }
 
 // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.

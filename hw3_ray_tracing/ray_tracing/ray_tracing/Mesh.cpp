@@ -16,7 +16,7 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture
 
 // render the mesh
 
-void Mesh::Draw(Shader& shader) {
+void Mesh::Draw(Shader& shader) const {
 	// bind appropriate textures
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;
@@ -86,29 +86,4 @@ void Mesh::setupMesh() {
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, Bitangent));
 
 	glBindVertexArray(0);
-}
-
-void Mesh::apply_model(const glm::mat4& model) {
-	for (auto& vertice : vertices) {
-		glm::vec4 t = model * glm::vec4(vertice.Position, 1.0f);
-		vertice.Position.x = t.x;
-		vertice.Position.y = t.y;
-		vertice.Position.z = t.z;
-	}
-	get_faces();
-}
-
-void Mesh::get_faces() {
-	faces.clear();
-	for (int i = 0, sz = vertices.size(); i < sz; i += 3) {
-		Face face;
-		for (int j = 0; j < 3; ++j) {
-			face.points[j] = vertices[i + j].Position;
-		}
-		auto
-			ab = face.points[1] - face.points[0],
-			ac = face.points[2] - face.points[0];
-		face.norm = glm::normalize(glm::cross(ab, ac));
-		faces.push_back(face);
-	}
 }

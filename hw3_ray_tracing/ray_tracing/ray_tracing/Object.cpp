@@ -1,9 +1,118 @@
 #include "Object.h"
 
+const float Object::INF = 100000000.0f, Object::EPS = 1e-7;
 
+void Object::find_minmax() {
+	for (const auto& face : faces) {
+		for (const auto& p : face.points) {
+			if (p.x < minv.x) {
+				minv.x = p.x;
+			}
+			else if (p.x > maxv.x) {
+				maxv.x = p.x;
+			}
+			if (p.y < minv.y) {
+				minv.y = p.y;
+			}
+			else if (p.y > maxv.y) {
+				maxv.y = p.y;
+			}
+			if (p.z < minv.z) {
+				minv.z = p.z;
+			}
+			else if (p.z > maxv.z) {
+				maxv.z = p.z;
+			}
+		}
+	}
+}
+
+bool Object::intersect_AABB(const Ray& ray) const {
+	float t;
+	glm::vec3 p;
+	const glm::vec3& src = ray.src, & dir = ray.dir;
+
+	// x
+	if (abs(dir.x) > EPS) {
+		if (dir.x > 0) {
+			t = (minv.x - src.x) / dir.x;
+		}
+		else {
+			t = (maxv.x - src.x) / dir.x;
+		}
+		if (t > 0) {
+			p = ray.point_at_t(t);
+			if (minv.y <= p.y && maxv.y >= p.y && minv.z <= p.z && maxv.z >= p.z) {
+				return true;
+			}
+		}
+	}
+
+	// y
+	if (abs(dir.y) > EPS) {
+		if (dir.y > 0) {
+			t = (minv.y - src.y) / dir.y;
+		}
+		else {
+			t = (maxv.y - src.y) / dir.y;
+		}
+		if (t > 0) {
+			p = ray.point_at_t(t);
+			if (minv.x <= p.x && maxv.x >= p.x && minv.z <= p.z && maxv.z >= p.z) {
+				return true;
+			}
+		}
+	}
+
+	// z
+	if (abs(dir.z) > EPS) {
+		if (dir.z > 0) {
+			t = (minv.z - src.z) / dir.z;
+		}
+		else {
+			t = (maxv.z - src.z) / dir.z;
+		}
+		if (t > 0) {
+			p = ray.point_at_t(t);
+			if (minv.y <= p.y && maxv.y >= p.y && minv.x <= p.x && maxv.x >= p.x) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
 
 void Object::set_model(const glm::mat4& model0) {
 	model = model0;
+}
+
+tuple<float, glm::vec3> Object::get_intersection(const Ray& ray) {
+	float minT = INF;
+	const Face* collidedFace = nullptr;
+	glm::vec3 start = ray.src, direction = ray.dir;
+	glm::vec3 norm;
+	for (const auto& face : faces) {
+		float v1 = glm::dot(face.norm, face.points[0] - start);
+		float v2 = glm::dot(face.norm, direction);
+		if (abs(v2) > EPS) { // v2 != 0
+			float t = v1 / v2;
+			if (t > -EPS && t < minT) {
+				glm::vec3 p = ray.point_at_t(t);
+				if (face.on_face(p)) {
+					minT = t;
+					collidedFace = &face;
+				}
+				else if (abs(p.x) <= 1 && abs(p.y) <= 1) {
+
+				}
+			}
+		}
+	}
+	if (collidedFace) {
+		norm = collidedFace->norm;
+	}
+	return make_tuple(minT, norm);
 }
 
 void Cube::set_up() {
@@ -31,149 +140,77 @@ Cube::Cube() {
 
 void Cube::prepare_for_ray_tracing() {
 	for (int i = 0; i < 12; ++i) {
-		cout << "---------" << endl;
+		faces.push_back(Face());
 		for (int j = 0; j < 3; ++j) {
-/*			glm::vec4 t = model * glm::vec4(
+			glm::vec4 t = model * glm::vec4(
 				vertices[i * 18 + j * 6],
 				vertices[i * 18 + j * 6 + 1],
-				vertices[i * 18 + j * 6 + 2], 1.0f);	*/		
-			glm::vec4 t = model * glm::vec4(
-					vertices[i * 9 + j * 3],
-					vertices[i * 9 + j * 3 + 1],
-					vertices[i * 9 + j * 3 + 2], 1.0f);
+				vertices[i * 18 + j * 6 + 2], 1.0f);
 			faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
-			cout << faces[i].points[j];
 		}
 		auto
 			ab = faces[i].points[1] - faces[i].points[0],
 			ac = faces[i].points[2] - faces[i].points[0];
 		faces[i].norm = glm::normalize(glm::cross(ab, ac));
-		cout << faces[i].norm;
 	}
+	find_minmax();
 }
 
-tuple<float, glm::vec3> Cube::get_intersection(const Ray& ray) {
-	float minT = INF;
-	const Face* collidedFace = nullptr;
-	glm::vec3 start = ray.vertex, direction = ray.direction;
-	glm::vec3 norm;
-	for (const auto& face : faces) {
-		float v1 = glm::dot(face.norm, face.points[0] - start);
-		float v2 = glm::dot(face.norm, direction);
-		if (abs(v2) > EPS) { // v2 != 0
-			float t = v1 / v2;
-			if (t > -EPS && t < minT) {
-				glm::vec3 p = ray.point_at_t(t);
-				if (face.on_face(p)) {
-					minT = t;
-					collidedFace = &face;
-				}
-			}
-		}
-	}
-	if (collidedFace) {
-		norm = collidedFace->norm;
-	}
-	return make_tuple(minT, norm);
-}
-
-void Cube::Draw(Shader& shader) {
+void Cube::Draw(Shader& shader) const {
 	shader.use();
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 }
 
-const float Cube::vertices[108] = {
+
+const float Cube::vertices[216] = {
 	// front
-	0.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+	 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+	 1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+	 1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+	-1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 
 	// back
-	1.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 0.0f,
-	0.0f, 1.0f, 0.0f,
-	0.0f, 1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,
-	1.0f, 0.0f, 0.0f,
+	 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f,
 
-	// left
-	0.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 0.0f,
-	0.0f, 0.0f, 0.0f,
+	 // left
+	 -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
+	 -1.0f, -1.0f,  1.0f, -1.0f, 0.0f, 0.0f,
+	 -1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f,
+	 -1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f,
+	 -1.0f,  1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
+	 -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
 
-	// right
-	1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
+	 // right
+	 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f,
+	 1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
+	 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
+	 1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 0.0f,
+	 1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 0.0f,
+	 1.0f, -1.0f,  1.0f, 1.0f, 0.0f, 0.0f,
 
-	// top
-	0.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,
-	0.0f, 1.0f, 0.0f,
-	0.0f, 1.0f, 1.0f,
+	 // top
+	 -1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+	  1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+	  1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+	  1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+	 -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+	 -1.0f, 1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
 
-	// down
-	0.0f, 0.0f, 0.0f,
-	1.0f, 0.0f, 0.0f,
-	1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
-	0.0f, 0.0f, 1.0f,
-	0.0f, 0.0f, 0.0f,
+	 // down
+	 -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
+	  1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
+	  1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f,
+	  1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f,
+	 -1.0f, -1.0f,  1.0f, 0.0f, -1.0f, 0.0f,
+	 -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f,
 };
 
-// Sphere
-Sphere::Sphere(const glm::vec3& center, float radius) : _center(center), _radius(radius) {
-
-}
-
-bool Sphere::inSphere(const glm::vec3& p) const {
-	return glm::distance(p, _center) < _radius + EPS;
-}
-
-float Sphere::rayCollision(const Ray& ray) const {
-	glm::vec3 vc = ray.vertex - _center;
-
-	float A = glm::dot(ray.direction, ray.direction);
-	float B = 2 * glm::dot(vc, ray.direction);
-	float C = glm::dot(vc, vc) - _radius * _radius;
-	if (abs(C) < EPS) {
-		C = 0;
-	}
-
-	float delta = B * B - 4 * A * C;
-	if (delta < EPS) {
-		return -1;
-	}
-	delta = sqrt(delta);
-	float t1 = (-B + delta) / 2 / A;
-	float t2 = (-B - delta) / 2 / A;
-	if (t1 < EPS&& t2 < EPS) {
-		return -1;
-	}
-	if (t2 > EPS) {
-		return t2;
-	}
-	else {
-		return t1;
-	}
-}
-
-glm::vec3 Sphere::calNormal(const glm::vec3& p) const {
-	return glm::normalize(p - _center);
-}
-bool Sphere::rayInEntity(const Ray& ray) const {
-	return inSphere(ray.vertex) && rayCollision(ray) > EPS;
-}

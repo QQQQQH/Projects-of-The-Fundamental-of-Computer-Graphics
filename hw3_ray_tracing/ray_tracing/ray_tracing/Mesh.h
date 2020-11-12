@@ -38,16 +38,13 @@ public:
 	vector<Vertex>       vertices;
 	vector<unsigned int> indices;
 	vector<Texture>      textures;
-	vector<Face>		 faces;
 	unsigned int VAO;
 
 	// constructor
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
 
-	void apply_model(const glm::mat4& model);
-	void get_faces();
 	// render the mesh
-	void Draw(Shader& shader);
+	void Draw(Shader& shader) const;
 
 private:
 	// render data 

@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 unsigned int NUM_OBJECT;
 
-//Camera camera(glm::vec3(0.0f, 1.0f, 3.0f));
+//Camera camera(glm::vec3(0.0f, 2.0f, 5.0f));
 Camera camera(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -42,15 +42,15 @@ GLFWwindow* init_GLFW();
 bool prepare(int f);
 void clear();
 int run1(int f);
-int run2(int f);
+int run2(int f, bool speedUp = false);
 
 int test() {
 	Face f;
-	f.points[0] = glm::vec3(-0.5, -0.5, -0.5);
-	f.points[1] = glm::vec3(0.5, -0.5, -0.5);
-	f.points[2] = glm::vec3(0.5, 0.5, -0.5);
-	f.norm = glm::vec3(0, 0, 1);
-	glm::vec3 p(-0.5, -0.5, -100);
+	f.points[0] = glm::vec3(1, -1, -1);
+	f.points[1] = glm::vec3(-1, -1, -1);
+	f.points[2] = glm::vec3(-1, 1, -1);
+	f.norm = glm::vec3(0, 0, -1);
+	glm::vec3 p(-0.681586, -0.690903, -1);
 	if (f.on_face(p)) {
 		cout << "Yes" << endl;
 	}
@@ -81,6 +81,12 @@ int main() {
 		if (strIn == "22") {
 			return run2(2);
 		}
+		if (strIn == "31") {
+			return run2(1, true);
+		}
+		if (strIn == "32") {
+			return run2(2, true);
+		}
 		else {
 			return test();
 		}
@@ -101,22 +107,28 @@ bool prepare(int f) {
 		NUM_OBJECT = 1;
 		objects[0] = new Cube;
 		glm::mat4 model(1.0f);
-		//model = glm::translate(model, glm::vec3(-1, 0, 0));
 		objects[0]->set_model(model);
 		scene.add_object(objects[0]);
 	}
 	else {
-		NUM_OBJECT = 3;
-		objects[0] = new Model("model/dragon_vrip_res4.ply");
-		objects[1] = new Model("model/bun_zipper_res4.ply");
-		objects[2] = new Model("model/happy_vrip_res4.ply");
-		for (int i = 0; i < 3; ++i) {
-			scene.add_object(objects[i]);
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
-			model = glm::scale(model, glm::vec3(10.0f));
-			objects[i]->set_model(model);
-		}
+		//NUM_OBJECT = 1;
+		//objects[0] = new Model("model/dragon_vrip_res4.ply");
+		//objects[1] = new Model("model/bun_zipper_res4.ply");
+		//objects[2] = new Model("model/happy_vrip_res4.ply");
+		//for (int i = 0; i < NUM_OBJECT; ++i) {
+		//	glm::mat4 model = glm::mat4(1.0f);
+		//	model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
+		//	model = glm::scale(model, glm::vec3(5.0f));
+		//	objects[i]->set_model(model);
+		//	scene.add_object(objects[i]);
+		//}
+
+		NUM_OBJECT = 1;
+		objects[0] = new Model("model/bun_zipper_res4.ply");
+		glm::mat4 model(1.0f);
+		model = glm::scale(model, glm::vec3(10.0f));
+		objects[0]->set_model(model);
+		scene.add_object(objects[0]);
 	}
 
 	return true;
@@ -198,10 +210,11 @@ int run1(int f) {
 	glfwTerminate();
 }
 
-int run2(int f) {
+int run2(int f, bool speedUp) {
 	if (!prepare(f)) {
 		return -1;
 	}
+	scene.set_speedUp(speedUp);
 	scene.prepare_for_ray_tracing();
 
 	float point[] = { 0,0,0 };
@@ -239,7 +252,7 @@ int run2(int f) {
 
 			// 计算出光线并进行光线追踪
 			Ray ray(camera.Position, globalPos);
-			glm::vec3 color = scene.trace_ray(ray);
+			glm::vec3 color = scene.trace_ray(ray, 0);
 
 			// 绘制该处的像素
 			shader.setVec3("vertexColor", color);

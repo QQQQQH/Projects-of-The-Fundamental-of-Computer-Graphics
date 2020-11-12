@@ -13,23 +13,28 @@
 using namespace std;
 
 class Scene {
-	static const int MAX_RECURSION_STEP = 1;
+	static const int MAX_RECURSION_STEP = 5;
 	static const float INF, EPS;
+	int cnt = 0;
+	bool speedUp = false;
 
 	tuple<glm::vec3, const Object*, glm::vec3> get_intersection(const Ray& ray);
 	glm::vec3 shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray);
 public:
 	glm::vec3
-		lightPos = glm::vec3(0.0f, 2.0f, 0.0f),
+		//lightPos = glm::vec3(2.0f, 2.0f, 2.0f),
+		lightPos = glm::vec3(2.0f, 2.0f, 0.0f),
 		lightColor = glm::vec3(1.0f, 1.0f, 1.0f),
-		diffuseColor = lightColor * glm::vec3(0.8f), // decrease the influence
+		diffuseColor = lightColor * glm::vec3(0.5f), // decrease the influence
 		ambientColor = diffuseColor * glm::vec3(0.2f), // low influence
 		specularStrength = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	vector<Object*> objects;
+
+	void set_speedUp(bool speedUp0);
 	void add_object(Object* const object);
 	void prepare_for_ray_tracing();
-	glm::vec3 trace_ray(const Ray& ray, unsigned int recursionStep = 0);
+	glm::vec3 trace_ray(const Ray& ray, unsigned int recursionStep);
 };
 
 

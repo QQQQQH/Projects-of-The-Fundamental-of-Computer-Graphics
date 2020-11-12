@@ -9,6 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <tuple>
+#include <vector>
 
 #include "Face.h"
 #include "Ray.h"
@@ -18,7 +19,11 @@ using namespace std;
 
 class Object {
 protected:
-	const float INF = 100000000.0f, EPS = 1e-7;
+	static const float INF, EPS;
+	int cnt = 0;
+	glm::vec3 maxv = glm::vec3(-INF), minv = glm::vec3(INF);
+
+	void find_minmax();
 public:
 	glm::vec3
 		ambient = glm::vec3(1.0f, 0.5f, 0.31f),
@@ -26,51 +31,31 @@ public:
 		specular = ambient * glm::vec3(0.5f);
 	float shininess = 32.0;
 	float
-		kShade = 1.0f,
-		kReflect = 0.0f,
+		kShade = 0.8f,
+		kReflect = 0.2f,
 		kRefract = 0.0f,
 		refractiveIndex = 1.5f;
 	glm::mat4 model = glm::mat4(1.0f);
 
+	vector<Face> faces;
+
 	void set_model(const glm::mat4& model0);
+	bool intersect_AABB(const Ray& ray) const;
+	tuple<float, glm::vec3> get_intersection(const Ray& ray);
 
 	virtual void prepare_for_ray_tracing() = 0;
-	virtual tuple<float, glm::vec3> get_intersection(const Ray& ray) = 0;
-
-	virtual void Draw(Shader& shader) = 0;
+	virtual void Draw(Shader& shader) const = 0;
 };
 
 class Cube : public Object {
-	static const float vertices[108];
+	static const float vertices[216];
 	void set_up();
 public:
 	unsigned int VAO, VBO;
-	Face faces[12];
 
 	Cube();
 	void prepare_for_ray_tracing();
-	tuple<float, glm::vec3> get_intersection(const Ray& ray);
-
-	void Draw(Shader& shader);
-};
-
-class Sphere : public Object {
-public:
-	Sphere(const glm::vec3& center, float radius);
-	bool inSphere(const glm::vec3& p) const;
-	glm::vec3 getCenter() const {
-		return _center;
-	}
-	float getRadius() const {
-		return _radius;
-	}
-
-	float rayCollision(const Ray& ray) const;
-	glm::vec3 calNormal(const glm::vec3& p) const;
-	bool rayInEntity(const Ray& ray) const;
-private:
-	glm::vec3 _center;
-	float _radius;
+	void Draw(Shader& shader) const;
 };
 
 #endif

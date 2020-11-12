@@ -87,32 +87,29 @@ void Object::set_model(const glm::mat4& model0) {
 	model = model0;
 }
 
-tuple<float, glm::vec3> Object::get_intersection(const Ray& ray) {
-	float minT = INF;
-	const Face* collidedFace = nullptr;
-	glm::vec3 start = ray.src, direction = ray.dir;
-	glm::vec3 norm;
+bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) {
+	float t, u, v, v1, v2;
+	glm::vec3 src = ray.src, dir = ray.dir, p;
+	bool intersect = false;
 	for (const auto& face : faces) {
-		float v1 = glm::dot(face.norm, face.points[0] - start);
-		float v2 = glm::dot(face.norm, direction);
+		v1 = glm::dot(face.norm, face.points[0] - src);
+		v2 = glm::dot(face.norm, dir);
 		if (abs(v2) > EPS) { // v2 != 0
-			float t = v1 / v2;
+			t = v1 / v2;
 			if (t > -EPS && t < minT) {
-				glm::vec3 p = ray.point_at_t(t);
-				if (face.on_face(p)) {
+				p = ray.point_at_t(t);
+				bool onFace = face.on_face(p, u, v);
+				//bool onFace = face.on_face(p);
+				if (onFace) {
 					minT = t;
-					collidedFace = &face;
-				}
-				else if (abs(p.x) <= 1 && abs(p.y) <= 1) {
-
+					norm = face.norm;
+					//norm = face.cal_norm(u, v);
+					intersect = true;
 				}
 			}
 		}
 	}
-	if (collidedFace) {
-		norm = collidedFace->norm;
-	}
-	return make_tuple(minT, norm);
+	return intersect;
 }
 
 void Cube::set_up() {
@@ -147,6 +144,10 @@ void Cube::prepare_for_ray_tracing() {
 				vertices[i * 18 + j * 6 + 1],
 				vertices[i * 18 + j * 6 + 2], 1.0f);
 			faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
+			faces[i].norms[j] = glm::vec3(
+				vertices[i * 18 + j * 6 + 3],
+				vertices[i * 18 + j * 6 + 4],
+				vertices[i * 18 + j * 6 + 5]);
 		}
 		auto
 			ab = faces[i].points[1] - faces[i].points[0],

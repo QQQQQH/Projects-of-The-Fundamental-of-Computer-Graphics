@@ -7,6 +7,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+#include <ctime>
+#include <omp.h>
 
 #include "Camera.h"
 #include "Model.h"
@@ -17,10 +19,10 @@
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-unsigned int NUM_OBJECT;
+glm::vec3 screenColor[SCR_WIDTH][SCR_HEIGHT];
 
 //Camera camera(glm::vec3(0.0f, 2.0f, 5.0f));
-Camera camera(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
+Camera camera(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -30,7 +32,7 @@ float lastFrame = 0.0f;
 
 GLFWwindow* window = nullptr;
 
-Object* objects[3];
+vector <Object*> objects;
 Scene scene;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -43,22 +45,6 @@ bool prepare(int f);
 void clear();
 int run1(int f);
 int run2(int f, bool speedUp = false);
-
-int test() {
-	Face f;
-	f.points[0] = glm::vec3(1, -1, -1);
-	f.points[1] = glm::vec3(-1, -1, -1);
-	f.points[2] = glm::vec3(-1, 1, -1);
-	f.norm = glm::vec3(0, 0, -1);
-	glm::vec3 p(-0.681586, -0.690903, -1);
-	if (f.on_face(p)) {
-		cout << "Yes" << endl;
-	}
-	else {
-		cout << "No" << endl;
-	}
-	return 0;
-}
 
 int main() {
 	camera.Zoom = 90;
@@ -87,10 +73,6 @@ int main() {
 		if (strIn == "32") {
 			return run2(2, true);
 		}
-		else {
-			return test();
-		}
-		cout << endl;
 	}
 	clear();
 	return 0;
@@ -104,40 +86,38 @@ bool prepare(int f) {
 		return false;
 	}
 	if (f == 1) {
-		NUM_OBJECT = 1;
-		objects[0] = new Cube;
+		objects.push_back(new Cube);
 		glm::mat4 model(1.0f);
 		objects[0]->set_model(model);
 		scene.add_object(objects[0]);
 	}
 	else {
-		//NUM_OBJECT = 1;
-		//objects[0] = new Model("model/dragon_vrip_res4.ply");
-		//objects[1] = new Model("model/bun_zipper_res4.ply");
-		//objects[2] = new Model("model/happy_vrip_res4.ply");
-		//for (int i = 0; i < NUM_OBJECT; ++i) {
-		//	glm::mat4 model = glm::mat4(1.0f);
-		//	model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
-		//	model = glm::scale(model, glm::vec3(5.0f));
-		//	objects[i]->set_model(model);
-		//	scene.add_object(objects[i]);
-		//}
+		objects.push_back(new Model("model/dragon_vrip.ply"));
+		objects.push_back(new Model("model/bun_zipper.ply"));
+		objects.push_back(new Model("model/happy_vrip.ply"));
+		for (int i = 0, sz = objects.size(); i < sz; ++i) {
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, glm::vec3(-2 + i * 2, 0, 0));
+			model = glm::scale(model, glm::vec3(10.0f));
+			objects[i]->set_model(model);
+			scene.add_object(objects[i]);
+		}
 
-		NUM_OBJECT = 1;
-		objects[0] = new Model("model/bun_zipper_res4.ply");
-		glm::mat4 model(1.0f);
-		model = glm::scale(model, glm::vec3(10.0f));
-		objects[0]->set_model(model);
-		scene.add_object(objects[0]);
+		//objects.push_back(new Model("model/bun_zipper.ply"));
+		//glm::mat4 model(1.0f);
+		//model = glm::scale(model, glm::vec3(10.0f));
+		//objects[0]->set_model(model);
+		//scene.add_object(objects[0]);
 	}
 
 	return true;
 }
 
 void clear() {
-	for (int i = 0; i < NUM_OBJECT; ++i) {
-		delete objects[i];
+	for (auto object : objects) {
+		delete object;
 	}
+	objects.clear();
 }
 
 
@@ -159,21 +139,16 @@ int run1(int f) {
 
 	glm::mat4 projection, view, model;
 
-	// render loop
 	while (!glfwWindowShouldClose(window)) {
-		// per-frame time logic
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		// input
 		processInput(window);
 
-		// render
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// view/projection transformations
 		projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
 		view = camera.GetViewMatrix();
 
@@ -182,13 +157,13 @@ int run1(int f) {
 		objectShader.setMat4("projection", projection);
 		objectShader.setMat4("view", view);
 
-		for (int i = 0; i < NUM_OBJECT; ++i) {
-			objectShader.setVec3("material.ambient", scene.objects[i]->ambient);
-			objectShader.setVec3("material.diffuse", scene.objects[i]->diffuse);
-			objectShader.setVec3("material.specular", scene.objects[i]->specular);
-			objectShader.setFloat("material.shininess", scene.objects[i]->shininess);
-			objectShader.setMat4("model", scene.objects[i]->model);
-			scene.objects[i]->Draw(objectShader);
+		for (const auto& object : objects) {
+			objectShader.setVec3("material.ambient", object->ambient);
+			objectShader.setVec3("material.diffuse", object->diffuse);
+			objectShader.setVec3("material.specular", object->specular);
+			objectShader.setFloat("material.shininess", object->shininess);
+			objectShader.setMat4("model", object->model);
+			object->Draw(objectShader);
 		}
 
 		// draw the lamp object
@@ -239,31 +214,52 @@ int run2(int f, bool speedUp) {
 	shader.use();
 	glBindVertexArray(VAO);
 
-	int cnt = 0;
-	// 枚举屏幕上每一个像素
-	for (unsigned int i = 0; i < SCR_WIDTH; ++i) {
-		for (unsigned int j = 0; j < SCR_HEIGHT; ++j) {
-			// 将像素坐标分量映射到[0, 1]
-			glm::vec3 pos(float(i) * 2 / SCR_WIDTH - 1.0f, float(j) * 2 / SCR_HEIGHT - 1.0f, 0.0f);
-			shader.setVec2("screenPos", glm::vec2(pos.x, pos.y));
+	clock_t clockStart = clock();
 
-			// 计算像素在世界坐标中的位置
+	int cnt = 0;
+
+	cout << omp_get_max_threads() << endl;
+	double time[12];
+	int threadCnt[12];
+	for (int i = 0; i < 12; ++i) {
+		time[i] = threadCnt[i] = 0;
+	}
+#pragma omp parallel for
+	for (int i = 0; i < SCR_WIDTH; ++i) {
+		clock_t t1 = clock();
+		for (int j = 0; j < SCR_HEIGHT; ++j) {
+			glm::vec3 pos(float(i) * 2 / SCR_WIDTH - 1.0f, float(j) * 2 / SCR_HEIGHT - 1.0f, 0.0f);
 			glm::vec3 globalPos = camera.Position + camera.Front + pos.x * camera.Right * (float(SCR_WIDTH) / SCR_HEIGHT) + pos.y * camera.Up;
 
-			// 计算出光线并进行光线追踪
 			Ray ray(camera.Position, globalPos);
 			glm::vec3 color = scene.trace_ray(ray, 0);
 
-			// 绘制该处的像素
+			screenColor[i][j] = color;
+			threadCnt[omp_get_thread_num()] ++;
+		}
+		time[omp_get_thread_num()] += (double) (clock() - t1) / CLOCKS_PER_SEC;
+	}
+
+	for (int i = 0; i < SCR_WIDTH; ++i) {
+		for (int j = 0; j < SCR_HEIGHT; ++j) {
+			glm::vec3 pos(float(i) * 2 / SCR_WIDTH - 1.0f, float(j) * 2 / SCR_HEIGHT - 1.0f, 0.0f);
+			shader.setVec2("screenPos", glm::vec2(pos.x, pos.y));
+
+			const glm::vec3& color = screenColor[i][j];
 			shader.setVec3("vertexColor", color);
+
 			if (color != glm::vec3(0, 0, 0)) {
-				//cout << color.x << ", " << color.y << ", " << color.z << endl;
 				++cnt;
 			}
 			glDrawArrays(GL_POINTS, 0, 1);
 		}
 	}
-	cout << cnt << endl;
+
+	cout << "cnt= " << cnt << endl;
+	cout << "time= " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl;
+	for (int i = 0; i < 12; ++i) {
+		cout << i << ". time= " << time[i] << ", threadCnt= " << threadCnt[i] << endl;
+	}
 
 	glfwSwapBuffers(window);
 	system("pause");

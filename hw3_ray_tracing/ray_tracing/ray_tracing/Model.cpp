@@ -48,10 +48,11 @@ void Model::prepare_for_ray_tracing() {
 		for (int i = 0; i < mesh.indices.size() / 3; ++i) {
 			faces.push_back(Face());
 			for (int j = 0; j < 3; ++j) {
-				const glm::vec3& v = mesh.vertices[mesh.indices[i * 3 + j]].Position;
+				const glm::vec3& pos = mesh.vertices[mesh.indices[i * 3 + j]].Position;
 				glm::vec4 t = model * glm::vec4(
-					v.x, v.y, v.z, 1.0f);
+					pos.x, pos.y, pos.z, 1.0f);
 				faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
+				faces[i].norms[j] = mesh.vertices[mesh.indices[i * 3 + j]].Normal;
 			}
 			auto
 				ab = faces[i].points[1] - faces[i].points[0],

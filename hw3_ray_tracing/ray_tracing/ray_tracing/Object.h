@@ -41,7 +41,7 @@ public:
 
 	void set_model(const glm::mat4& model0);
 	bool intersect_AABB(const Ray& ray) const;
-	tuple<float, glm::vec3> get_intersection(const Ray& ray);
+	bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm);
 
 	virtual void prepare_for_ray_tracing() = 0;
 	virtual void Draw(Shader& shader) const = 0;

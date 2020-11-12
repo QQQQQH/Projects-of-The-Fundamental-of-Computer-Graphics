@@ -2,28 +2,25 @@
 
 const float Scene::INF = 100000000.0f, Scene::EPS = 1e-7;
 
-tuple<glm::vec3, const Object*, glm::vec3> Scene::get_intersection(const Ray& ray) {
+bool Scene::get_intersection(const Ray& ray, const Object*& collidedObject, glm::vec3& collidedPoint, glm::vec3& norm) {
 	float minT = INF;
-	const Object* collidedObject = nullptr;
-	glm::vec3 norm, collidedPoint;
+	bool intersect = false;
 	for (const auto object : objects) {
 		if (speedUp) {
 			if (!object->intersect_AABB(ray)) {
 				continue;
 			}
 		}
-		const auto& intersectRes = object->get_intersection(ray);
-		float t = get<0>(intersectRes);
-		if (t < minT) {
-			minT = t;
+		bool intersect = object->get_intersection(ray, minT, norm);
+		if (intersect) {
 			collidedObject = object;
-			norm = get<1>(intersectRes);
 		}
 	}
 	if (collidedObject) {
 		collidedPoint = ray.point_at_t(minT);
+		intersect = true;
 	}
-	return make_tuple(collidedPoint, collidedObject, norm);
+	return intersect;
 }
 
 glm::vec3 Scene::shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray) {
@@ -69,35 +66,31 @@ glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
 	}
 
 	// 计算光线与物体的交点以及该物体
-	const auto& intersect_res = get_intersection(ray);
-	const Object* collidedObject = get<1>(intersect_res);
-
+	const Object* collidedObject = nullptr;
+	glm::vec3 collidedPoint, norm;
 
 	// 递归结束条件：光线没有照射到物体上
-	if (collidedObject == nullptr) {
+	if (!get_intersection(ray, collidedObject, collidedPoint, norm)) {
 		return lightIntensity;
 	}
 
-	// 获得照射点及其法向量
-	glm::vec3 collidedPoint = get<0>(intersect_res);
-	glm::vec3 normal = get<2>(intersect_res);
-	bool inObject = glm::dot(ray.dir, normal) > 0;
+	bool inObject = glm::dot(ray.dir, norm) > 0;
 
 	if (inObject) {
 		// 若光线是从物体内部射出的，法向量应该取反
-		normal = -normal;
+		norm = -norm;
 	}
 
 	// 光照强度的第一部分：局部光照强度
 	if (!inObject) {
 		lightIntensity = collidedObject->kShade *
-			shade(*collidedObject, collidedPoint, normal, ray);
+			shade(*collidedObject, collidedPoint, norm, ray);
 	}
 
 	// 光照强度的第二部分：反射光照强度
 	if (collidedObject->kReflect > EPS) { // > 0
 		// 计算反射方向
-		glm::vec3 reflectDirection = glm::reflect(ray.dir, normal);
+		glm::vec3 reflectDirection = glm::reflect(ray.dir, norm);
 
 		lightIntensity += collidedObject->kReflect *
 			trace_ray(Ray(collidedPoint, collidedPoint + reflectDirection), recursionStep + 1);
@@ -114,7 +107,7 @@ glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
 		}
 
 		// 计算折射方向
-		glm::vec3 refractDirection = glm::refract(ray.dir, normal, currentIndex / nextIndex);
+		glm::vec3 refractDirection = glm::refract(ray.dir, norm, currentIndex / nextIndex);
 
 		lightIntensity += collidedObject->kRefract *
 			trace_ray(Ray(collidedPoint, collidedPoint + refractDirection), recursionStep + 1);

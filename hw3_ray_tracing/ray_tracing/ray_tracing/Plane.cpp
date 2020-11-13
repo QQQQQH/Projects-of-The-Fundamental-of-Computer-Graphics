@@ -1,5 +1,10 @@
 #include "Object.h"
 
+bool Plane::is_white(const glm::vec3& p) const {
+	return fmod(floor(p.x) + floor(p.z), 2);
+	//return true;
+}
+
 Plane::Plane(const Material& material0) :Object(material0) {
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);

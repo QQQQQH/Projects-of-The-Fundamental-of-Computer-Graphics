@@ -13,10 +13,14 @@ Sphere::Sphere(const glm::vec3& center0, const float& radius0, const Material& m
 	Object(material0), center(center0), radius(radius0) {}
 
 bool Sphere::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const {
-	glm::vec3 vc = ray.src - center;
+	glm::vec3
+		src = ray.src,
+		dir = ray.dir,
+		vc = src - center,
+		p;
 
 	float A = 1;
-	float B = 2 * glm::dot(vc, ray.dir);
+	float B = 2 * glm::dot(vc, dir);
 	float C = glm::dot(vc, vc) - radius * radius;
 	if (abs(C) < EPS) {
 		C = 0;
@@ -29,7 +33,7 @@ bool Sphere::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) cons
 	delta = sqrt(delta);
 	float t1 = (-B + delta) / 2 / A;
 	float t2 = (-B - delta) / 2 / A;
-	if (t1 < EPS && t2 < EPS) {
+	if (t1 < EPS) {
 		return false;
 	}
 	if (t2 > EPS) {
@@ -44,10 +48,15 @@ bool Sphere::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) cons
 }
 
 bool Sphere::intersected(const Ray& ray) const {
-	glm::vec3 vc = ray.src - center;
+	glm::vec3
+		src = ray.src,
+		dir = ray.dir,
+		dest = ray.dest,
+		vc = src - center,
+		p;
 
 	float A = 1;
-	float B = 2 * glm::dot(vc, ray.dir);
+	float B = 2 * glm::dot(vc, dir);
 	float C = glm::dot(vc, vc) - radius * radius;
 	if (abs(C) < EPS) {
 		C = 0;
@@ -60,10 +69,16 @@ bool Sphere::intersected(const Ray& ray) const {
 	delta = sqrt(delta);
 	float t1 = (-B + delta) / 2 / A;
 	float t2 = (-B - delta) / 2 / A;
-	if (t1 < EPS && t2 < EPS) {
+	if (t1 < EPS) {
 		return false;
 	}
-	return true;
+	if (t2 > EPS) {
+		p = ray.point_at_t(t2);
+	}
+	else {
+		p = ray.point_at_t(t1);
+	}
+	return abs(p.x - src.x) < abs(dest.x - src.x);
 }
 
 void Sphere::prepare_for_ray_tracing() {

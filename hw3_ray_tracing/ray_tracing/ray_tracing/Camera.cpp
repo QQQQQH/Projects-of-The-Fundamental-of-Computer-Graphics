@@ -20,6 +20,20 @@ glm::mat4 Camera::GetViewMatrix() {
 	return glm::lookAt(Position, Position + Front, Up);
 }
 
+void Camera::set_position(const glm::vec3& pos) {
+	Position = pos;
+}
+
+void Camera::set_yaw(const float& yaw) {
+	Yaw = yaw;
+	updateCameraVectors();
+}
+
+void Camera::set_pitch(const float& pitch) {
+	Pitch = pitch;
+	updateCameraVectors();
+}
+
 void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
 	float velocity = MovementSpeed * deltaTime;
 	switch (direction) {

@@ -23,9 +23,7 @@ const unsigned int SCR_HEIGHT = 1080;
 //const unsigned int SCR_HEIGHT = 600;
 glm::vec3 screenColor[SCR_WIDTH][SCR_HEIGHT];
 
-//Camera camera(glm::vec3(0.0f, 2.0f, 3.0f));
-//Camera camera(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -135.0f, -30.0f);
-Camera camera(glm::vec3(0.0f, 3.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -45.0f);
+Camera camera(glm::vec3(0.0f, 5.0f, 5.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -33,15 +31,11 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+Material pureColorMaterial, metalMaterial, smoothMaterial, fullReflectMaterial, fullRefractMaterial;
+
 GLFWwindow* window = nullptr;
 
-vector <Object*> objects;
 Scene scene;
-
-Material
-floorMaterial(glm::vec3(1.0f, 1.0f, 1.0f), 32.0f, 0.6f, 0.4f, 0.0f),
-itemMaterial(glm::vec3(1.0f, 0.5f, 0.31f), 32.0f, 1.0f, 0.0f, 0.0f),
-ballMaterial(glm::vec3(1.0f), 32.0f, 0.3f, 0.0f, 0.7f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -75,40 +69,63 @@ int main() {
 		if (strIn == "22") {
 			return run2(2);
 		}
+		if (strIn == "23") {
+			return run2(3);
+		}
 		if (strIn == "31") {
 			return run2(1, true);
 		}
 		if (strIn == "32") {
 			return run2(2, true);
 		}
+		if (strIn == "33") {
+			return run2(3, true);
+		}
 	}
 	return 0;
 }
 
 bool prepare(int f) {
-	// initialization
+	// initialize window
 	window = init_GLFW();
 	if (!window) {
 		glfwTerminate();
 		return false;
 	}
 
+	// set materials
+	pureColorMaterial.set_pure_color();
+	metalMaterial.set_metal();
+	smoothMaterial.set_smooth();
+	fullReflectMaterial.set_full_reflect();
+	fullRefractMaterial.set_full_refract();
+
+	// add floor
 	glm::mat4 model(1.0f);
 
-	objects.push_back(new Plane(floorMaterial));
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(20.0f));
-	objects[0]->set_model(model);
-	scene.add_object(objects[0]);
+	Object* floor = new Plane(smoothMaterial);
+	model = glm::scale(model, glm::vec3(200.0f));
+	floor->set_model(model);
+	scene.add_object(floor);
 
+	// only 1 cube
 	if (f == 1) {
-		objects.push_back(new Cube(itemMaterial));
+		camera.set_position(glm::vec3(3.0f, 3.0f, 3.0f));
+		camera.set_yaw(-135.0f);
+		camera.set_pitch(-30.0f);
+
+		scene.set_light_pos(glm::vec3(2.0f, 1.5f, 0.0f));
+
+		Object* cube = new Cube(pureColorMaterial);
+		//cube->material.set_gold();
+		cube->material.set_color(glm::vec3(1.0f, 0.5f, 0.31f));
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-		objects[1]->set_model(model);
-		scene.add_object(objects[1]);
+		cube->set_model(model);
+		scene.add_object(cube);
 	}
-	else {
+	// models
+	else if (f == 2) {
 		//objects.push_back(new Model("model/dragon_vrip.ply", itemMaterial));
 		//objects.push_back(new Model("model/bun_zipper.ply", itemMaterial));
 		//objects.push_back(new Model("model/happy_vrip.ply", itemMaterial));
@@ -126,23 +143,28 @@ bool prepare(int f) {
 		//model = glm::scale(model, glm::vec3(10.0f));
 		//objects[1]->set_model(model);
 		//scene.add_object(objects[1]);
+	}
+	// balls
+	else {
+		camera.set_position(glm::vec3(0.0f, 10.0f, 0.0f));
+		camera.set_pitch(-90.0f);
 
-		objects.push_back(new Sphere(glm::vec3(0.0f, 1.0f, -2.0f), 1.0f, ballMaterial));
+		scene.set_light_pos(glm::vec3(0.0f, 5.0f, 0.0f));
+
+		Object* ball = new Sphere(glm::vec3(1.5f, 7.0f, 0.0f), 1.0f, fullRefractMaterial);
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(1.0f));
-		objects[1]->set_model(model);
-		scene.add_object(objects[1]);
+		ball->set_model(model);
+		scene.add_object(ball);
 	}
 
 	return true;
 }
 
 void clear() {
-	for (auto object : objects) {
+	for (auto object : scene.objects) {
 		delete object;
 	}
-	objects.clear();
+	scene.objects.clear();
 }
 
 
@@ -151,9 +173,10 @@ int run1(int f) {
 		return -1;
 	}
 
-	Cube lightCube(itemMaterial);
+	Cube lightCube(pureColorMaterial);
 	Shader objectShader("shader/object.vs", "shader/object.fs");
 	Shader lightCubeShader("shader/light_cube.vs", "shader/light_cube.fs");
+	Shader floorShader("shader/floor.vs", "shader/floor.fs");
 
 	objectShader.use();
 
@@ -161,6 +184,14 @@ int run1(int f) {
 	objectShader.setVec3("light.ambient", scene.ambientColor);
 	objectShader.setVec3("light.diffuse", scene.diffuseColor);
 	objectShader.setVec3("light.specular", scene.specularStrength);
+
+	floorShader.use();
+
+	floorShader.setVec3("light.position", scene.lightPos);
+	floorShader.setVec3("light.ambient", scene.ambientColor);
+	floorShader.setVec3("light.diffuse", scene.diffuseColor);
+	floorShader.setVec3("light.specular", scene.specularStrength);
+
 
 	glm::mat4 projection, view, model;
 
@@ -177,18 +208,29 @@ int run1(int f) {
 		projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
 		view = camera.GetViewMatrix();
 
-		objectShader.use();
-		objectShader.setVec3("viewPos", camera.Position);
-		objectShader.setMat4("projection", projection);
-		objectShader.setMat4("view", view);
+		if (scene.objects.size()) {
 
-		for (const auto& object : objects) {
-			objectShader.setVec3("material.ambient", object->ambient());
-			objectShader.setVec3("material.diffuse", object->diffuse());
-			objectShader.setVec3("material.specular", object->specular());
-			objectShader.setFloat("material.shininess", object->shininess());
-			objectShader.setMat4("model", object->model);
-			object->Draw(objectShader);
+			floorShader.use();
+			floorShader.setVec3("viewPos", camera.Position);
+			floorShader.setMat4("projection", projection);
+			floorShader.setMat4("view", view);
+			floorShader.setMat4("model", scene.objects[0]->model);
+			scene.objects[0]->Draw(floorShader);
+
+
+			objectShader.use();
+			objectShader.setVec3("viewPos", camera.Position);
+			objectShader.setMat4("projection", projection);
+			objectShader.setMat4("view", view);
+
+			for (int i = 1, sz = scene.objects.size(); i < sz; ++i) {
+				objectShader.setVec3("material.ambient", scene.objects[i]->ambient());
+				objectShader.setVec3("material.diffuse", scene.objects[i]->diffuse());
+				objectShader.setVec3("material.specular", scene.objects[i]->specular());
+				objectShader.setFloat("material.shininess", scene.objects[i]->shininess());
+				objectShader.setMat4("model", scene.objects[i]->model);
+				scene.objects[i]->Draw(objectShader);
+			}
 		}
 
 		// draw the lamp object
@@ -253,7 +295,7 @@ int run2(int f, bool speedUp) {
 		time[i] = threadCnt[i] = 0;
 	}
 
-#pragma omp parallel for schedule(dynamic)
+	//#pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < SCR_WIDTH; ++i) {
 		clock_t t1 = clock();
 		for (int j = 0; j < SCR_HEIGHT; ++j) {

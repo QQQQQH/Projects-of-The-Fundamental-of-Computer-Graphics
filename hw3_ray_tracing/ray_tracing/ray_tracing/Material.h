@@ -9,20 +9,27 @@
 
 class Material {
 public:
-	const glm::vec3
+	glm::vec3
 		ambient = glm::vec3(1.0f),
 		diffuse = ambient,
 		specular = glm::vec3(0.5f) * ambient;
-	const float
+	float
 		shininess = 32.0f,
 		kShade = 1.0f,
 		kReflect = 0.0f,
 		kRefract = 0.0f,
-		refractiveIndex = 1.5f;
+		refractiveIndex = 1.52f;
 
-	Material() {}
-	Material(const glm::vec3& color, const float& shininess0, const float& kShade0, const float& kReflect0, const float& kRefract0, const float& refractiveIndex0 = 1.5f) :
-		ambient(color), diffuse(color), specular(color* glm::vec3(0.5f)), shininess(shininess0),
-		kShade(kShade0), kReflect(kReflect0), kRefract(kRefract0), refractiveIndex(refractiveIndex0) {}
+	Material(const glm::vec3& color = glm::vec3(1.0f)) :
+		ambient(color), diffuse(color), specular(color* glm::vec3(0.5f)) {}
+
+	void set_color(const glm::vec3& color);
+	void set_pure_color();
+	void set_metal();
+	void set_smooth();
+	void set_full_reflect();
+	void set_full_refract();
+
+	void set_gold();
 };
 

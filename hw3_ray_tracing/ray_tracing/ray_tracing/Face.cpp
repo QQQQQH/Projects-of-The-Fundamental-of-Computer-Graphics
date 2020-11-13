@@ -40,7 +40,6 @@ bool Face::on_face(const glm::vec3& P, float& u, float& v) const {
 		return false;
 	}
 	return u + v <= 1 + EPS;
-
 }
 
 glm::vec3 Face::cal_norm(float u, float v) const {

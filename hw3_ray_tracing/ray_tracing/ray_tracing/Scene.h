@@ -23,14 +23,15 @@ class Scene {
 	glm::vec3 shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray);
 public:
 	glm::vec3
-		lightPos = glm::vec3(5.0f, 5.0f, 0.0f),
+		lightPos = glm::vec3(0.0f, 50.0f, 0.0f),
 		lightColor = glm::vec3(1.0f, 1.0f, 1.0f),
-		diffuseColor = lightColor * glm::vec3(0.5f),
-		ambientColor = diffuseColor * glm::vec3(0.2f),
+		diffuseColor = lightColor * glm::vec3(0.8f),
+		ambientColor = lightColor * glm::vec3(0.2f),
 		specularStrength = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	vector<Object*> objects;
 
+	void set_light_pos(const glm::vec3& lightPos0);
 	void set_speedUp(bool speedUp0);
 	void add_object(Object* const object);
 	void prepare_for_ray_tracing();

@@ -125,7 +125,7 @@ bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) cons
 
 bool Object::intersected(const Ray& ray) const {
 	float t, v1, v2;
-	glm::vec3 src = ray.src, dir = ray.dir, p;
+	glm::vec3 src = ray.src, dir = ray.dir, dest = ray.dest, p;
 	for (const auto& face : faces) {
 		v1 = glm::dot(face.norm, face.points[0] - src);
 		v2 = glm::dot(face.norm, dir);
@@ -134,7 +134,7 @@ bool Object::intersected(const Ray& ray) const {
 			if (t > EPS) {
 				p = ray.point_at_t(t);
 				bool onFace = face.on_face(p);
-				if (onFace) {
+				if (onFace && abs(p.x - src.x) < abs(dest.x - src.x)) {
 					return true;
 				}
 			}

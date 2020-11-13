@@ -21,17 +21,19 @@ using namespace std;
 class Object {
 protected:
 	static const float INF, EPS;
-	const Material material;
 	glm::vec3 maxv = glm::vec3(-INF), minv = glm::vec3(INF);
 
 	virtual void find_minmax();
 public:
+	Material material;
 	glm::mat4 model = glm::mat4(1.0f);
 	vector<Face> faces;
 
-	Object() {}
 	Object(const Material& material0) :material(material0) {}
 
+	virtual glm::vec3 ambient(const glm::vec3& p) const { return material.ambient; }
+	virtual glm::vec3 diffuse(const glm::vec3& p) const { return material.ambient; }
+	virtual glm::vec3 specular(const glm::vec3& p) const { return material.specular; }
 	glm::vec3 ambient() const { return material.ambient; }
 	glm::vec3 diffuse() const { return material.ambient; }
 	glm::vec3 specular() const { return material.specular; }
@@ -54,7 +56,6 @@ class Cube : public Object {
 	static const float vertices[216];
 	unsigned int VAO, VBO;
 public:
-	Cube() {}
 	Cube(const Material& material0);
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
@@ -64,9 +65,12 @@ class Plane :public Object {
 	static const float vertices[36];
 	unsigned int VAO, VBO;
 
+	bool is_white(const glm::vec3& p)const;
 public:
-	Plane() {}
 	Plane(const Material& material0);
+	glm::vec3 ambient(const glm::vec3& p) const { return is_white(p) ? glm::vec3(1.0f) : glm::vec3(0.0f); }
+	glm::vec3 diffuse(const glm::vec3& p) const { return ambient(p); }
+	glm::vec3 specular(const glm::vec3& p) const { return glm::vec3(0.5f) * ambient(p); }
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
 };
@@ -78,7 +82,6 @@ public:
 	glm::vec3 center = glm::vec3(0.0f);
 	float radius = 1.0f;
 
-	Sphere() {}
 	Sphere(const glm::vec3& center0, const float& radius0, const Material& material0);
 	bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const;
 	bool intersected(const Ray& ray) const;

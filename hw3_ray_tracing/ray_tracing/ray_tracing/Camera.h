@@ -45,6 +45,9 @@ public:
 
 	glm::mat4 GetViewMatrix();
 
+	void set_position(const glm::vec3& pos);
+	void set_yaw(const float& yaw);
+	void set_pitch(const float& pitch);
 	void ProcessKeyboard(Camera_Movement direction, float deltaTime);
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
 	void ProcessMouseScroll(float yoffset);

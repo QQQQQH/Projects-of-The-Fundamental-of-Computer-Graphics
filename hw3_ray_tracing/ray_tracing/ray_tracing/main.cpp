@@ -57,6 +57,7 @@ int main() {
 			<< "2. 1920 x 1080\n" << endl;
 		string in;
 		cin >> in;
+		cout << endl;
 		if (in == "1") {
 			SCR_WIDTH = 800;
 			SCR_HEIGHT = 600;
@@ -76,6 +77,7 @@ int main() {
 			<< "3. Ray Tracing+\n" << endl;
 		string in;
 		cin >> in;
+		cout << endl;
 		if (in == "1") {
 			system("cls");
 			while (true) {
@@ -83,15 +85,16 @@ int main() {
 					<< "1. Only 1 cube\n"
 					<< "2. Models\n" << endl;
 				cin >> in;
+				cout << endl;
 				if (in == "1") {
 					return run1(1);
 				}
-				if (in == "2") {
+				else if (in == "2") {
 					return run1(2);
 				}
 			}
 		}
-		if (in == "2" || in == "3") {
+		else if (in == "2" || in == "3") {
 			system("cls");
 			bool speedUp = in == "3";
 			while (true) {
@@ -100,13 +103,14 @@ int main() {
 					<< "2. Models\n"
 					<< "3. Balls\n" << endl;
 				cin >> in;
+				cout << endl;
 				if (in == "1") {
 					return run2(1, speedUp);
 				}
-				if (in == "2") {
+				else if (in == "2") {
 					return run2(2, speedUp);
 				}
-				if (in == "3") {
+				else if (in == "3") {
 					return run2(3, speedUp);
 				}
 			}
@@ -163,13 +167,14 @@ bool prepare(int f) {
 
 		scene.set_light_pos(glm::vec3(0.0f, 10.0f, 0.0f));
 
-		//floor->set_color(glm::vec3(0.87f, 0.64f, 0.70f), glm::vec3(0.69f, 0.29f, 0.40f));
-
 		vector <Object*> objects;
 
-		Object* bun = new Model("model/bun_zipper_res4.ply", metalMaterial);
-		Object* happy = new Model("model/happy_vrip_res4.ply", metalMaterial);
-		Object* dragon = new Model("model/dragon_vrip_res4.ply", metalMaterial);
+		//Object* bun = new Model("model/bun_zipper_res4.ply", metalMaterial);
+		//Object* happy = new Model("model/happy_vrip_res4.ply", metalMaterial);
+		//Object* dragon = new Model("model/dragon_vrip_res4.ply", metalMaterial);
+		Object* bun = new Model("model/bun_zipper.ply", metalMaterial);
+		Object* happy = new Model("model/happy_vrip.ply", metalMaterial);
+		Object* dragon = new Model("model/dragon_vrip.ply", metalMaterial);
 		objects.push_back(bun);
 		objects.push_back(happy);
 		objects.push_back(dragon);
@@ -203,6 +208,13 @@ bool prepare(int f) {
 		Object* ball2 = new Sphere(fullReflectMaterial, glm::vec3(0, 1, 4), 1);
 		scene.add_object(ball1);
 		scene.add_object(ball2);
+
+
+		int numOfTriangles = 0;
+		for (auto object : scene.objects) {
+			numOfTriangles += object->numOfTriangles;
+		}
+		cout << "Number of Triangles: " << numOfTriangles << endl;
 	}
 
 	// balls
@@ -303,7 +315,6 @@ bool prepare(int f) {
 			scene.add_object(ballsLow[i]);
 		}
 	}
-
 	return true;
 }
 
@@ -472,7 +483,7 @@ int run2(int f, bool speedUp) {
 		}
 	}
 
-	cout << "time= " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl;
+	cout << "Time = " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl;
 
 	glfwSwapBuffers(window);
 	system("pause");

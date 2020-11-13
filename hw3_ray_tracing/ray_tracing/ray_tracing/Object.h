@@ -25,6 +25,7 @@ protected:
 
 	virtual void find_minmax();
 public:
+	int numOfTriangles = 0;
 	Material material;
 	glm::mat4 model = glm::mat4(1.0f);
 	vector<Face> faces;

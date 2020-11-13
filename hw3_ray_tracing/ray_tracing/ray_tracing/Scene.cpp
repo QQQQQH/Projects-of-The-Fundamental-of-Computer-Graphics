@@ -80,8 +80,10 @@ void Scene::add_object(Object* const object) {
 
 
 void Scene::prepare_for_ray_tracing() {
+	int cnt = 0;
 	for (auto& object : objects) {
 		object->prepare_for_ray_tracing();
+		cnt += object->faces.size();
 	}
 }
 

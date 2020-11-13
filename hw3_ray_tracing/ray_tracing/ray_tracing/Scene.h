@@ -25,9 +25,14 @@ public:
 	glm::vec3
 		lightPos = glm::vec3(0.0f, 50.0f, 0.0f),
 		lightColor = glm::vec3(1.0f, 1.0f, 1.0f),
-		diffuseColor = lightColor * glm::vec3(0.8f),
+		diffuseColor = lightColor * glm::vec3(0.5f),
 		ambientColor = lightColor * glm::vec3(0.2f),
 		specularStrength = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	float
+		constant = 1.0f,
+		linear = 0.007f,
+		quadratic = 0.0002f;
 
 	vector<Object*> objects;
 

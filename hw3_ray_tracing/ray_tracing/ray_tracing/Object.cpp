@@ -1,6 +1,6 @@
 #include "Object.h"
 
-const float Object::INF = 100000000.0f, Object::EPS = 1e-5;
+const float Object::INF = 100000000.0f, Object::EPS = 1e-4;
 
 void Object::find_minmax() {
 	for (const auto& face : faces) {

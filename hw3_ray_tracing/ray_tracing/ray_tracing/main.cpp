@@ -24,6 +24,8 @@ const unsigned int SCR_HEIGHT = 1080;
 glm::vec3 screenColor[SCR_WIDTH][SCR_HEIGHT];
 
 Camera camera(glm::vec3(0.0f, 5.0f, 5.0f));
+//Camera camera(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, -90.f);
+
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -103,7 +105,7 @@ bool prepare(int f) {
 	// add floor
 	glm::mat4 model(1.0f);
 
-	Object* floor = new Plane(smoothMaterial);
+	Plane* floor = new Plane(smoothMaterial);
 	model = glm::scale(model, glm::vec3(200.0f));
 	floor->set_model(model);
 	scene.add_object(floor);
@@ -143,6 +145,19 @@ bool prepare(int f) {
 		//model = glm::scale(model, glm::vec3(10.0f));
 		//objects[1]->set_model(model);
 		//scene.add_object(objects[1]);
+
+		camera.set_position(glm::vec3(3.0f, 3.0f, 3.0f));
+		camera.set_yaw(-135.0f);
+		camera.set_pitch(-30.0f);
+
+		scene.set_light_pos(glm::vec3(5.0f, 5.0f, 0.0f));
+
+		floor->material.set_pure_color();
+
+		Object* ball = new Sphere(pureColorMaterial, glm::vec3(0.0f, 0.0f, 0.0f));
+		ball->material.set_color(glm::vec3(1.0f, 0.0f, 0.0f));
+		ball->material.shininess = 32.0f;
+		scene.add_object(ball);
 	}
 	// balls
 	else {
@@ -151,10 +166,97 @@ bool prepare(int f) {
 
 		scene.set_light_pos(glm::vec3(0.0f, 5.0f, 0.0f));
 
-		Object* ball = new Sphere(glm::vec3(1.5f, 7.0f, 0.0f), 1.0f, fullRefractMaterial);
-		model = glm::mat4(1.0f);
-		ball->set_model(model);
-		scene.add_object(ball);
+		floor->set_color(glm::vec3(0.87f, 0.64f, 0.70f), glm::vec3(0.69f, 0.29f, 0.40f));
+		floor->material.set_pure_color();
+
+		//balls high
+		const int NUM_BALL_HIGH = 6;
+		Object* ballsHigh[NUM_BALL_HIGH];
+		glm::vec3 ballHighPos[] = {
+			glm::vec3(3.0f, 7.0f, 1.2f),
+			glm::vec3(3.0f, 7.0f, -1.2f),
+			glm::vec3(0.0f, 7.0f, 1.2f),
+			glm::vec3(0.0f, 7.0f, -1.2f),
+			glm::vec3(-3.0f, 7.0f, 1.2f),
+			glm::vec3(-3.0f, 7.0f, -1.2f),
+		};
+		float ballHighrRefractiveIndex[] = {
+			1.52f,
+			1.73f,
+			1.73f,
+			1.52f,
+			1.52f,
+			1.73f,
+		};
+		for (int i = 0; i < NUM_BALL_HIGH; ++i) {
+			ballsHigh[i] = new Sphere(fullRefractMaterial, ballHighPos[i]);
+			ballsHigh[i]->material.refractiveIndex = ballHighrRefractiveIndex[i];
+			scene.add_object(ballsHigh[i]);
+		}
+
+		// balls low
+		const int NUM_BALL_LOW = 20;
+		Object* ballsLow[NUM_BALL_LOW];
+		glm::vec3 ballLowPos[] = {
+			glm::vec3(-12.0f, 0.6f, -5.0f),
+			glm::vec3(12.0f, 0.6f, 5.0f),
+			glm::vec3(12.0f, 0.6f, -5.0f),
+			glm::vec3(-12.0f, 0.6f, 5.0f),
+			glm::vec3(0.0f, 0.4f, 0.0f),
+
+			glm::vec3(0.0f, 1.0f, 3.0f),
+			glm::vec3(6.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 0.8f, 4.0f),
+
+			glm::vec3(-9.0f, 0.6f, 3.0f),
+			glm::vec3(-6.0f, 0.7f, -5.0f),
+			glm::vec3(9.0f, 0.8f, -4.0f),
+
+			glm::vec3(0.0f, 0.4f, -3.0f),
+			glm::vec3(-6.0f, 0.6f, 0.0f),
+			glm::vec3(-3.0f, 0.9f, -4.0f),
+
+			glm::vec3(0.0f, 0.5f, -3.0f),
+			glm::vec3(-7.0f, 0.7f, 2.0f),
+			glm::vec3(3.0f, 1.2f, -4.0f),
+
+			glm::vec3(-2.0f, 0.6f, 6.0f),
+			glm::vec3(7.0f, 0.7f, 2.0f),
+			glm::vec3(-3.0f, 0.8f, 4.0f),
+		};
+
+		float rgb[NUM_BALL_LOW][3] = {
+			35,  205, 182,
+			142, 229, 213,
+			148, 251, 240,
+			192, 247, 252,
+			172, 248, 211,
+			230, 228, 192,
+			231, 202, 127,
+			255, 215, 187,
+			255, 179, 168,
+			255, 76,  108,
+			35,  205, 182,
+			142, 229, 213,
+			148, 251, 240,
+			192, 247, 252,
+			172, 248, 211,
+			230, 228, 192,
+			231, 202, 127,
+			255, 215, 187,
+			255, 179, 168,
+			255, 76,  108,
+		};
+		for (int i = 0; i < NUM_BALL_LOW; ++i) {
+			ballsLow[i] = new Sphere(metalMaterial, ballLowPos[i], ballLowPos[i].y);
+			ballsLow[i]->material.set_color(glm::vec3(
+				rgb[i][0] / 255,
+				rgb[i][1] / 255,
+				rgb[i][2] / 255
+			));
+			cout << ballsLow[i]->ambient();
+			scene.add_object(ballsLow[i]);
+		}
 	}
 
 	return true;
@@ -184,6 +286,9 @@ int run1(int f) {
 	objectShader.setVec3("light.ambient", scene.ambientColor);
 	objectShader.setVec3("light.diffuse", scene.diffuseColor);
 	objectShader.setVec3("light.specular", scene.specularStrength);
+	objectShader.setFloat("light.constant", scene.constant);
+	objectShader.setFloat("light.linear", scene.linear);
+	objectShader.setFloat("light.quadratic", scene.quadratic);
 
 	floorShader.use();
 
@@ -191,6 +296,9 @@ int run1(int f) {
 	floorShader.setVec3("light.ambient", scene.ambientColor);
 	floorShader.setVec3("light.diffuse", scene.diffuseColor);
 	floorShader.setVec3("light.specular", scene.specularStrength);
+	floorShader.setFloat("light.constant", scene.constant);
+	floorShader.setFloat("light.linear", scene.linear);
+	floorShader.setFloat("light.quadratic", scene.quadratic);
 
 
 	glm::mat4 projection, view, model;

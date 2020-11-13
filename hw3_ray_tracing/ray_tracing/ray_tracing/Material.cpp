@@ -43,7 +43,6 @@ void Material::set_gold() {
 	//specular = glm::vec3(0.628281f, 0.555802f, 0.366065f);
 	//shininess = 0.4 * 128;
 
-
 	ambient = glm::vec3(0.2125, 0.1275, 0.054);
 	diffuse = glm::vec3(0.714, 0.4284, 0.18144);
 	specular = glm::vec3(0.393548, 0.271906, 0.166721);

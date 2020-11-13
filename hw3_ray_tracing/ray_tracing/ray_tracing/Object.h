@@ -64,11 +64,14 @@ public:
 class Plane :public Object {
 	static const float vertices[36];
 	unsigned int VAO, VBO;
+	glm::vec3 white = glm::vec3(1.0f), black = glm::vec3(0.0f);
 
 	bool is_white(const glm::vec3& p)const;
 public:
 	Plane(const Material& material0);
-	glm::vec3 ambient(const glm::vec3& p) const { return is_white(p) ? glm::vec3(1.0f) : glm::vec3(0.0f); }
+
+	void set_color(const glm::vec3& white0, const glm::vec3& black0) { white = white0; black = black0; }
+	glm::vec3 ambient(const glm::vec3& p) const { return is_white(p) ? white : black; }
 	glm::vec3 diffuse(const glm::vec3& p) const { return ambient(p); }
 	glm::vec3 specular(const glm::vec3& p) const { return glm::vec3(0.5f) * ambient(p); }
 	void prepare_for_ray_tracing();
@@ -82,7 +85,9 @@ public:
 	glm::vec3 center = glm::vec3(0.0f);
 	float radius = 1.0f;
 
-	Sphere(const glm::vec3& center0, const float& radius0, const Material& material0);
+	Sphere(const Material& material0, const glm::vec3& center0 = glm::vec3(0), const float& radius0 = 1);
+
+	void set_center_radius(const glm::vec3& center0, const float& radius0 = 1) { center = center0, radius = radius0; }
 	bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const;
 	bool intersected(const Ray& ray) const;
 	void prepare_for_ray_tracing();

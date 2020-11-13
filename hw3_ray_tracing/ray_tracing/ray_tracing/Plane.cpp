@@ -1,7 +1,7 @@
 #include "Object.h"
 
 bool Plane::is_white(const glm::vec3& p) const {
-	return fmod(floor(p.x) + floor(p.z), 2);
+	return fmod(floor(p.x * 2) + floor(p.z * 2), 2);
 	//return true;
 }
 

@@ -17,11 +17,9 @@
 #include "Shader.h"
 
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
-//const unsigned int SCR_WIDTH = 800;
-//const unsigned int SCR_HEIGHT = 600;
-glm::vec3 screenColor[SCR_WIDTH][SCR_HEIGHT];
+const unsigned int MAX_WIDTH = 1920, MAX_HEIGHT = 1080;
+unsigned int SCR_WIDTH, SCR_HEIGHT;
+glm::vec3 screenColor[MAX_WIDTH][MAX_HEIGHT];
 
 Camera camera(glm::vec3(0.0f, 5.0f, 5.0f));
 //Camera camera(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.f, -90.f);
@@ -53,35 +51,65 @@ int run2(int f, bool speedUp = false);
 int main() {
 	camera.Zoom = 90;
 	while (true) {
+		system("cls");
+		cout << "Please Select:\n"
+			<< "1. 800 x 600\n"
+			<< "2. 1920 x 1080\n" << endl;
+		string in;
+		cin >> in;
+		if (in == "1") {
+			SCR_WIDTH = 800;
+			SCR_HEIGHT = 600;
+			break;
+		}
+		else if (in == "2") {
+			SCR_WIDTH = 1920;
+			SCR_HEIGHT = 1080;
+			break;
+		}
+	}
+	while (true) {
+		system("cls");
 		cout << "Please Select:\n"
 			<< "1. Phong\n"
 			<< "2. Ray Tracing\n"
 			<< "3. Ray Tracing+\n" << endl;
-		string strIn;
-		cin >> strIn;
-		if (strIn == "11") {
-			return run1(1);
+		string in;
+		cin >> in;
+		if (in == "1") {
+			system("cls");
+			while (true) {
+				cout << "Please Select:\n"
+					<< "1. Only 1 cube\n"
+					<< "2. Models\n" << endl;
+				cin >> in;
+				if (in == "1") {
+					return run1(1);
+				}
+				if (in == "2") {
+					return run1(2);
+				}
+			}
 		}
-		if (strIn == "12") {
-			return run1(2);
-		}
-		if (strIn == "21") {
-			return run2(1);
-		}
-		if (strIn == "22") {
-			return run2(2);
-		}
-		if (strIn == "23") {
-			return run2(3);
-		}
-		if (strIn == "31") {
-			return run2(1, true);
-		}
-		if (strIn == "32") {
-			return run2(2, true);
-		}
-		if (strIn == "33") {
-			return run2(3, true);
+		if (in == "2" || in == "3") {
+			system("cls");
+			bool speedUp = in == "3";
+			while (true) {
+				cout << "Please Select:\n"
+					<< "1. Only 1 cube\n"
+					<< "2. Models\n"
+					<< "3. Balls\n" << endl;
+				cin >> in;
+				if (in == "1") {
+					return run2(1, speedUp);
+				}
+				if (in == "2") {
+					return run2(2, speedUp);
+				}
+				if (in == "3") {
+					return run2(3, speedUp);
+				}
+			}
 		}
 	}
 	return 0;
@@ -126,39 +154,57 @@ bool prepare(int f) {
 		cube->set_model(model);
 		scene.add_object(cube);
 	}
+
 	// models
 	else if (f == 2) {
-		//objects.push_back(new Model("model/dragon_vrip.ply", itemMaterial));
-		//objects.push_back(new Model("model/bun_zipper.ply", itemMaterial));
-		//objects.push_back(new Model("model/happy_vrip.ply", itemMaterial));
-		//for (int i = 1, sz = objects.size(); i < sz; ++i) {
-		//	glm::mat4 model = glm::mat4(1.0f);
-		//	model = glm::translate(model, glm::vec3(-4 + i * 2, 0.0f, 0.0f));
-		//	model = glm::scale(model, glm::vec3(10.0f));
-		//	objects[i]->set_model(model);
-		//	scene.add_object(objects[i]);
-		//}
-
-		//objects.push_back(new Model("model/bun_zipper_res4.ply", itemMaterial));
-		//model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-		//model = glm::scale(model, glm::vec3(10.0f));
-		//objects[1]->set_model(model);
-		//scene.add_object(objects[1]);
-
-		camera.set_position(glm::vec3(3.0f, 3.0f, 3.0f));
-		camera.set_yaw(-135.0f);
+		camera.set_position(glm::vec3(6.0f, 4.0f, 6.0f));
+		camera.set_yaw(-137.0f);
 		camera.set_pitch(-30.0f);
 
-		scene.set_light_pos(glm::vec3(5.0f, 5.0f, 0.0f));
+		scene.set_light_pos(glm::vec3(0.0f, 10.0f, 0.0f));
 
-		floor->material.set_pure_color();
+		//floor->set_color(glm::vec3(0.87f, 0.64f, 0.70f), glm::vec3(0.69f, 0.29f, 0.40f));
 
-		Object* ball = new Sphere(pureColorMaterial, glm::vec3(0.0f, 0.0f, 0.0f));
-		ball->material.set_color(glm::vec3(1.0f, 0.0f, 0.0f));
-		ball->material.shininess = 32.0f;
-		scene.add_object(ball);
+		vector <Object*> objects;
+
+		Object* bun = new Model("model/bun_zipper_res4.ply", metalMaterial);
+		Object* happy = new Model("model/happy_vrip_res4.ply", metalMaterial);
+		Object* dragon = new Model("model/dragon_vrip_res4.ply", metalMaterial);
+		objects.push_back(bun);
+		objects.push_back(happy);
+		objects.push_back(dragon);
+
+		glm::vec3 pos[] = {
+			glm::vec3(1,0,6),
+			glm::vec3(6,0,1),
+			glm::vec3(2,2,2),
+		};
+
+		float rgb[][3] = {
+			255,215,187,
+			148,251,240,
+			230,228,192,
+		};
+
+		for (int i = 0, sz = objects.size(); i < sz; ++i) {
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, pos[i]);
+			model = glm::scale(model, glm::vec3(15.0f));
+			model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0, 1, 0));
+			objects[i]->set_model(model);
+			objects[i]->material.set_color(glm::vec3(
+				rgb[i][0] / 255,
+				rgb[i][1] / 255,
+				rgb[i][2] / 255));
+			scene.add_object(objects[i]);
+		}
+
+		Object* ball1 = new Sphere(fullRefractMaterial, glm::vec3(4, 1, 0), 1);
+		Object* ball2 = new Sphere(fullReflectMaterial, glm::vec3(0, 1, 4), 1);
+		scene.add_object(ball1);
+		scene.add_object(ball2);
 	}
+
 	// balls
 	else {
 		camera.set_position(glm::vec3(0.0f, 10.0f, 0.0f));
@@ -254,7 +300,6 @@ bool prepare(int f) {
 				rgb[i][1] / 255,
 				rgb[i][2] / 255
 			));
-			cout << ballsLow[i]->ambient();
 			scene.add_object(ballsLow[i]);
 		}
 	}
@@ -394,16 +439,13 @@ int run2(int f, bool speedUp) {
 
 	clock_t clockStart = clock();
 
-	int cnt = 0;
-
-	cout << "thread num= " << omp_get_max_threads() << endl;
 	double time[12];
 	int threadCnt[12];
 	for (int i = 0; i < 12; ++i) {
 		time[i] = threadCnt[i] = 0;
 	}
 
-	//#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < SCR_WIDTH; ++i) {
 		clock_t t1 = clock();
 		for (int j = 0; j < SCR_HEIGHT; ++j) {
@@ -426,19 +468,11 @@ int run2(int f, bool speedUp) {
 
 			const glm::vec3& color = screenColor[i][j];
 			shader.setVec3("vertexColor", color);
-
-			if (color != glm::vec3(0, 0, 0)) {
-				++cnt;
-			}
 			glDrawArrays(GL_POINTS, 0, 1);
 		}
 	}
 
-	cout << "color cnt= " << cnt << endl;
 	cout << "time= " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl;
-	for (int i = 0; i < 12; ++i) {
-		cout << i << ". time= " << time[i] << ", threadCnt= " << threadCnt[i] << endl;
-	}
 
 	glfwSwapBuffers(window);
 	system("pause");
@@ -524,7 +558,6 @@ GLFWwindow* init_GLFW() {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return nullptr;
 	}
-	// tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
 	stbi_set_flip_vertically_on_load(true);
 	glEnable(GL_DEPTH_TEST);
 	return window;

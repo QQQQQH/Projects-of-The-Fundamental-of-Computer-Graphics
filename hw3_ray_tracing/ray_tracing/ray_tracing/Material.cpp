@@ -20,8 +20,8 @@ void Material::set_metal() {
 }
 
 void Material::set_smooth() {
-	kShade = 0.6f;
-	kReflect = 0.4f;
+	kShade = 0.5f;
+	kReflect = 0.5f;
 	kRefract = 0.0f;
 }
 

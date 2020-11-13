@@ -42,7 +42,7 @@ glm::vec3 Scene::shade(const Object& object, const glm::vec3& pos, const glm::ve
 	glm::vec3 ambient = ambientColor * object.ambient();
 
 	if (intersected(Ray(pos, lightPos))) {
-		return ambient;
+		//return ambient;
 	}
 
 	glm::vec3 lightDir = glm::normalize(lightPos - pos);

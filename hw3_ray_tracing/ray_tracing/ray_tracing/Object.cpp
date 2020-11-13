@@ -28,16 +28,21 @@ void Object::find_minmax() {
 }
 
 bool Object::intersect_AABB(const Ray& ray) const {
-	float t;
-	glm::vec3 p;
-	const glm::vec3& src = ray.src, & dir = ray.dir;
-	float
+	float t,
 		minx = minv.x - EPS,
 		miny = minv.y - EPS,
 		minz = minv.z - EPS,
 		maxx = maxv.x + EPS,
 		maxy = maxv.y + EPS,
 		maxz = maxv.z + EPS;
+	glm::vec3 p;
+	const glm::vec3& src = ray.src, & dir = ray.dir;
+
+	if (minx <= src.x && src.x <= maxx &&
+		miny <= src.y && src.y <= maxy &&
+		minz <= src.z && src.z <= maxz) {
+		return true;
+	}
 
 	// x
 	if (abs(dir.x) > EPS) {
@@ -93,7 +98,7 @@ void Object::set_model(const glm::mat4& model0) {
 	model = model0;
 }
 
-bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) {
+bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const {
 	float t, u, v, v1, v2;
 	glm::vec3 src = ray.src, dir = ray.dir, p;
 	bool intersect = false;
@@ -137,4 +142,3 @@ bool Object::intersected(const Ray& ray) const {
 	}
 	return false;
 }
-

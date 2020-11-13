@@ -1,6 +1,4 @@
 #include "Object.h"
-#include "Object.h"
-
 
 Plane::Plane(const Material& material0) :Object(material0) {
 	glGenVertexArrays(1, &VAO);

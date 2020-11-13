@@ -39,8 +39,9 @@ vector <Object*> objects;
 Scene scene;
 
 Material
-floorMaterial(glm::vec3(1.0f), 32.0f, 0.6f, 0.4f, 0.0f),
-itemMaterial(glm::vec3(1.0f, 0.5f, 0.31f), 32.0f, 1.0f, 0.0f, 0.0f);
+floorMaterial(glm::vec3(1.0f, 1.0f, 1.0f), 32.0f, 0.6f, 0.4f, 0.0f),
+itemMaterial(glm::vec3(1.0f, 0.5f, 0.31f), 32.0f, 1.0f, 0.0f, 0.0f),
+ballMaterial(glm::vec3(1.0f), 32.0f, 0.3f, 0.0f, 0.7f);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -81,7 +82,6 @@ int main() {
 			return run2(2, true);
 		}
 	}
-	clear();
 	return 0;
 }
 
@@ -120,10 +120,17 @@ bool prepare(int f) {
 		//	scene.add_object(objects[i]);
 		//}
 
-		objects.push_back(new Model("model/bun_zipper_res4.ply", itemMaterial));
+		//objects.push_back(new Model("model/bun_zipper_res4.ply", itemMaterial));
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+		//model = glm::scale(model, glm::vec3(10.0f));
+		//objects[1]->set_model(model);
+		//scene.add_object(objects[1]);
+
+		objects.push_back(new Sphere(glm::vec3(0.0f, 1.0f, -2.0f), 1.0f, ballMaterial));
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0, 0.0f));
-		model = glm::scale(model, glm::vec3(10.0f));
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.0f));
 		objects[1]->set_model(model);
 		scene.add_object(objects[1]);
 	}
@@ -201,6 +208,9 @@ int run1(int f) {
 	}
 
 	glfwTerminate();
+	clear();
+
+	return 0;
 }
 
 int run2(int f, bool speedUp) {
@@ -283,6 +293,8 @@ int run2(int f, bool speedUp) {
 	glfwSwapBuffers(window);
 	system("pause");
 	glfwTerminate();
+
+	clear();
 	return 0;
 }
 

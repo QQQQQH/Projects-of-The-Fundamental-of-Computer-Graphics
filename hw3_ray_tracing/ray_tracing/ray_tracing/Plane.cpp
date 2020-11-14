@@ -5,7 +5,7 @@ bool Plane::is_white(const glm::vec3& p) const {
 	//return true;
 }
 
-Plane::Plane(const Material& material0) :Object(material0) {
+void Plane::setup_gl() {
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 

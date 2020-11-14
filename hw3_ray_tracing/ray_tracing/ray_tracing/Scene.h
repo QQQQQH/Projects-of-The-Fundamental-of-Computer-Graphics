@@ -40,6 +40,7 @@ public:
 	void set_speedUp(bool speedUp0);
 	void add_object(Object* const object);
 	void prepare_for_ray_tracing();
+	void setup_gl();
 	glm::vec3 trace_ray(const Ray& ray, unsigned int recursionStep);
 };
 

@@ -31,6 +31,7 @@ public:
 
 	Model(string const& path, const Material& material0, bool gamma = false);
 
+	void setup_gl();
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
 

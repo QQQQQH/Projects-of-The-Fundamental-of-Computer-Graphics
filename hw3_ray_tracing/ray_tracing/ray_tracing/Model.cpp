@@ -43,6 +43,12 @@ Model::Model(string const& path, const Material& material0, bool gamma) : Object
 	loadModel(path);
 }
 
+void Model::setup_gl() {
+	for (auto& mesh : meshes) {
+		mesh.setupMesh();
+	}
+}
+
 void Model::prepare_for_ray_tracing() {
 	for (auto& mesh : meshes) {
 		for (int i = 0; i < mesh.indices.size() / 3; ++i) {

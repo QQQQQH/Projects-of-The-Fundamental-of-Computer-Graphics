@@ -84,6 +84,12 @@ void Scene::prepare_for_ray_tracing() {
 	}
 }
 
+void Scene::setup_gl() {
+	for (auto& object : objects) {
+		object->setup_gl();
+	}
+}
+
 glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
 	glm::vec3 lightIntensity(0.0f);
 

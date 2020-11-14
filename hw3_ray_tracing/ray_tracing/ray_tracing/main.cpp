@@ -43,7 +43,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 GLFWwindow* init_GLFW();
-bool prepare(int f);
+void prepare(int f);
 void clear();
 int run1(int f);
 int run2(int f, bool speedUp = false);
@@ -83,8 +83,9 @@ int main() {
 			while (true) {
 				cout << "Please Select:\n"
 					<< "1. Only 1 cube\n"
-					<< "2. Models\n"
-					<< "3. Models (Hight Res)\n" << endl;
+					<< "2. Models (Low Res)\n"
+					<< "3. Models\n"
+					<< "4. Models (Hight Res)\n" << endl;
 				cin >> in;
 				cout << endl;
 				if (in == "1") {
@@ -96,6 +97,9 @@ int main() {
 				else if (in == "3") {
 					return run1(3);
 				}
+				else if (in == "4") {
+					return run1(4);
+				}
 			}
 		}
 		else if (in == "2" || in == "3") {
@@ -104,9 +108,10 @@ int main() {
 			while (true) {
 				cout << "Please Select:\n"
 					<< "1. Only 1 cube\n"
-					<< "2. Models\n"
-					<< "3. Models (Hight Res) (Time Cost)\n"
-					<< "4. Balls\n" << endl;
+					<< "2. Models (Low Res)\n"
+					<< "3. Models\n"
+					<< "4. Models (Hight Res) (Time Cost)\n"
+					<< "5. Balls\n" << endl;
 				cin >> in;
 				cout << endl;
 				if (in == "1") {
@@ -121,20 +126,16 @@ int main() {
 				else if (in == "4") {
 					return run2(4, speedUp);
 				}
+				else if (in == "5") {
+					return run2(5, speedUp);
+				}
 			}
 		}
 	}
 	return 0;
 }
 
-bool prepare(int f) {
-	// initialize window
-	window = init_GLFW();
-	if (!window) {
-		glfwTerminate();
-		return false;
-	}
-
+void prepare(int f) {
 	// set materials
 	pureColorMaterial.set_pure_color();
 	metalMaterial.set_metal();
@@ -167,7 +168,7 @@ bool prepare(int f) {
 	}
 
 	// models
-	else if (f == 2 || f == 3) {
+	else if (f >= 2 && f <= 4) {
 		camera.set_position(glm::vec3(6.0f, 4.0f, 6.0f));
 		camera.set_yaw(-137.0f);
 		camera.set_pitch(-30.0f);
@@ -180,11 +181,16 @@ bool prepare(int f) {
 
 		Object* bun, * happy, * dragon;
 		if (f == 2) {
+			bun = new Model("model/bun_zipper_res4.ply", metalMaterial);
+			happy = new Model("model/happy_vrip_res4.ply", metalMaterial);
+			dragon = new Model("model/dragon_vrip_res4.ply", metalMaterial);
+		}
+		else if (f == 3) {
 			bun = new Model("model/bun_zipper.ply", metalMaterial);
 			happy = new Model("model/happy_vrip_res3.ply", metalMaterial);
 			dragon = new Model("model/dragon_vrip_res3.ply", metalMaterial);
 		}
-		else {
+		else if (f == 4) {
 			bun = new Model("model/bun_zipper.ply", metalMaterial);
 			happy = new Model("model/happy_vrip.ply", metalMaterial);
 			dragon = new Model("model/dragon_vrip.ply", metalMaterial);
@@ -333,9 +339,7 @@ bool prepare(int f) {
 			scene.add_object(ballsLow[i]);
 		}
 	}
-
 	scene.prepare_for_ray_tracing();
-	return true;
 }
 
 void clear() {
@@ -347,9 +351,15 @@ void clear() {
 
 
 int run1(int f) {
-	if (!prepare(f)) {
+	prepare(f);
+
+	// initialize window
+	window = init_GLFW();
+	if (!window) {
+		glfwTerminate();
 		return -1;
 	}
+	scene.setup_gl();
 
 	Cube lightCube(pureColorMaterial);
 	Shader objectShader("shader/object.vs", "shader/object.fs");
@@ -441,41 +451,11 @@ int run1(int f) {
 }
 
 int run2(int f, bool speedUp) {
-	if (!prepare(f)) {
-		return -1;
-	}
+	prepare(f);
 	scene.set_speedUp(speedUp);
-
-	float point[] = { 0,0,0 };
-
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-	glEnableVertexAttribArray(0);
-
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	Shader shader("shader/ray_tracing.vs", "shader/ray_tracing.fs");
-	shader.use();
-	glBindVertexArray(VAO);
 
 	cout << "Calculating Ray Tracing..." << endl;
 	clock_t clockStart = clock();
-
-	double time[12];
-	int threadCnt[12];
-	for (int i = 0; i < 12; ++i) {
-		time[i] = threadCnt[i] = 0;
-	}
 
 #pragma omp parallel for schedule(dynamic)
 	for (int i = 0; i < SCR_WIDTH; ++i) {
@@ -488,28 +468,74 @@ int run2(int f, bool speedUp) {
 			glm::vec3 color = scene.trace_ray(ray, 0);
 
 			screenColor[i][j] = color;
-			threadCnt[omp_get_thread_num()] ++;
 		}
-		time[omp_get_thread_num()] += (double) (clock() - t1) / CLOCKS_PER_SEC;
 	}
+
+	// initialize window
+	//window = init_GLFW();
+	//if (!window) {
+	//	glfwTerminate();
+	//	return -1;
+	//}
+
+	//float point[] = { 0,0,0 };
+
+	//unsigned int VBO, VAO;
+	//glGenVertexArrays(1, &VAO);
+	//glGenBuffers(1, &VBO);
+
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
+
+	//glBindVertexArray(VAO);
+
+	//glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+	//glEnableVertexAttribArray(0);
+
+	//glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Shader shader("shader/ray_tracing.vs", "shader/ray_tracing.fs");
+	//shader.use();
+	//glBindVertexArray(VAO);
 
 	for (int i = 0; i < SCR_WIDTH; ++i) {
 		for (int j = 0; j < SCR_HEIGHT; ++j) {
 			glm::vec3 pos(float(i) * 2 / SCR_WIDTH - 1.0f, float(j) * 2 / SCR_HEIGHT - 1.0f, 0.0f);
-			shader.setVec2("screenPos", glm::vec2(pos.x, pos.y));
+			//shader.setVec2("screenPos", glm::vec2(pos.x, pos.y));
 
 			const glm::vec3& color = screenColor[i][j];
-			shader.setVec3("vertexColor", color);
-			glDrawArrays(GL_POINTS, 0, 1);
+			//shader.setVec3("vertexColor", color);
+			//glDrawArrays(GL_POINTS, 0, 1);
 		}
 	}
 
-	cout << "Time = " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl;
+	//glfwSwapBuffers(window);
 
-	glfwSwapBuffers(window);
+	FILE* fp = fopen("res.ppm", "wb");
+	(void) fprintf(fp, "P6\n%d %d\n255\n", SCR_WIDTH, SCR_HEIGHT);
+	for (int i = SCR_HEIGHT - 1; i >= 0; --i) {
+		for (int j = 0; j < SCR_WIDTH; ++j) {
+			static unsigned char color[3];
+			color[0] = (unsigned char) min((int) (255 * screenColor[j][i].x), 255);
+			color[1] = (unsigned char) min((int) (255 * screenColor[j][i].y), 255);
+			color[2] = (unsigned char) min((int) (255 * screenColor[j][i].z), 255);
+			fwrite(color, 1, 3, fp);
+		}
+	}
+	fclose(fp);
+
+	cout << "Time = " << (double) (clock() - clockStart) / CLOCKS_PER_SEC << " s." << endl
+		<< "Result picture saved in \"res.ppm\"." << endl;
+
 	system("pause");
-	glfwTerminate();
+	//while (!glfwWindowShouldClose(window)) {
+	//	processInput(window);
+	//	glfwPollEvents();
+	//}
 
+	//glfwTerminate();
 	clear();
 	return 0;
 }
@@ -573,7 +599,7 @@ GLFWwindow* init_GLFW() {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Simple Scene", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Ray Tracing", NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();

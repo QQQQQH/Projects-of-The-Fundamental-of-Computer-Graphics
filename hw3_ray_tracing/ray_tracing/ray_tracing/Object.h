@@ -47,6 +47,7 @@ public:
 	void set_model(const glm::mat4& model0);
 	bool intersect_AABB(const Ray& ray) const;
 
+	virtual void setup_gl() {}
 	virtual bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm, bool& inObject) const;
 	virtual bool intersected(const Ray& ray) const;
 	virtual void prepare_for_ray_tracing() = 0;
@@ -57,7 +58,9 @@ class Cube : public Object {
 	static const float vertices[216];
 	unsigned int VAO, VBO;
 public:
-	Cube(const Material& material0);
+	Cube(const Material& material0) :Object(material0) {}
+
+	void setup_gl();
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;
 };
@@ -69,8 +72,9 @@ class Plane :public Object {
 
 	bool is_white(const glm::vec3& p)const;
 public:
-	Plane(const Material& material0);
+	Plane(const Material& material0) : Object(material0) {}
 
+	void setup_gl();
 	void set_color(const glm::vec3& white0, const glm::vec3& black0) { white = white0; black = black0; }
 	glm::vec3 ambient(const glm::vec3& p) const { return is_white(p) ? white : black; }
 	glm::vec3 diffuse(const glm::vec3& p) const { return ambient(p); }

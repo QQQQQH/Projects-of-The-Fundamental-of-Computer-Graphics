@@ -43,6 +43,7 @@ public:
 	// constructor
 	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
 
+	void setupMesh();
 	// render the mesh
 	void Draw(Shader& shader) const;
 
@@ -50,7 +51,6 @@ private:
 	// render data 
 	unsigned int VBO, EBO;
 
-	void setupMesh();
 	// initializes all the buffer objects/arrays
 };
 #endif

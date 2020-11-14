@@ -98,10 +98,11 @@ void Object::set_model(const glm::mat4& model0) {
 	model = model0;
 }
 
-bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const {
+bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm, bool& inObject) const {
 	float t, u, v, v1, v2;
 	glm::vec3 src = ray.src, dir = ray.dir, p;
 	bool intersect = false;
+	int cnt = 0;
 	for (const auto& face : faces) {
 		v1 = glm::dot(face.norm, face.points[0] - src);
 		v2 = glm::dot(face.norm, dir);
@@ -110,11 +111,11 @@ bool Object::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) cons
 			if (t > EPS && t < minT) {
 				p = ray.point_at_t(t);
 				bool onFace = face.on_face(p, u, v);
-				//bool onFace = face.on_face(p);
 				if (onFace) {
 					minT = t;
-					norm = face.norm;
-					//norm = face.cal_norm(u, v);
+					++cnt;
+					norm = face.cal_norm(u, v);
+					inObject = glm::dot(dir, face.norm) > 0;
 					intersect = true;
 				}
 			}

@@ -101,7 +101,8 @@ int main() {
 				cout << "Please Select:\n"
 					<< "1. Only 1 cube\n"
 					<< "2. Models\n"
-					<< "3. Balls\n" << endl;
+					<< "3. Models (Hight Res) (Time Cost)\n"
+					<< "4. Balls\n" << endl;
 				cin >> in;
 				cout << endl;
 				if (in == "1") {
@@ -112,6 +113,9 @@ int main() {
 				}
 				else if (in == "3") {
 					return run2(3, speedUp);
+				}
+				else if (in == "4") {
+					return run2(4, speedUp);
 				}
 			}
 		}
@@ -151,7 +155,6 @@ bool prepare(int f) {
 		scene.set_light_pos(glm::vec3(2.0f, 1.5f, 0.0f));
 
 		Object* cube = new Cube(pureColorMaterial);
-		//cube->material.set_gold();
 		cube->material.set_color(glm::vec3(1.0f, 0.5f, 0.31f));
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -160,7 +163,7 @@ bool prepare(int f) {
 	}
 
 	// models
-	else if (f == 2) {
+	else if (f == 2 || f == 3) {
 		camera.set_position(glm::vec3(6.0f, 4.0f, 6.0f));
 		camera.set_yaw(-137.0f);
 		camera.set_pitch(-30.0f);
@@ -169,12 +172,20 @@ bool prepare(int f) {
 
 		vector <Object*> objects;
 
-		//Object* bun = new Model("model/bun_zipper_res4.ply", metalMaterial);
-		//Object* happy = new Model("model/happy_vrip_res4.ply", metalMaterial);
-		//Object* dragon = new Model("model/dragon_vrip_res4.ply", metalMaterial);
-		Object* bun = new Model("model/bun_zipper.ply", metalMaterial);
-		Object* happy = new Model("model/happy_vrip.ply", metalMaterial);
-		Object* dragon = new Model("model/dragon_vrip.ply", metalMaterial);
+		cout << "Loading Models..." << endl;
+
+		Object* bun, * happy, * dragon;
+		if (f == 2) {
+			bun = new Model("model/bun_zipper.ply", metalMaterial);
+			happy = new Model("model/happy_vrip_res3.ply", metalMaterial);
+			dragon = new Model("model/dragon_vrip_res3.ply", metalMaterial);
+		}
+		else {
+			bun = new Model("model/bun_zipper.ply", metalMaterial);
+			happy = new Model("model/happy_vrip.ply", metalMaterial);
+			dragon = new Model("model/dragon_vrip.ply", metalMaterial);
+		}
+
 		objects.push_back(bun);
 		objects.push_back(happy);
 		objects.push_back(dragon);
@@ -188,7 +199,8 @@ bool prepare(int f) {
 		float rgb[][3] = {
 			255,215,187,
 			148,251,240,
-			230,228,192,
+			255,127,79,
+			//230,228,192,
 		};
 
 		for (int i = 0, sz = objects.size(); i < sz; ++i) {
@@ -315,6 +327,8 @@ bool prepare(int f) {
 			scene.add_object(ballsLow[i]);
 		}
 	}
+
+	scene.prepare_for_ray_tracing();
 	return true;
 }
 
@@ -424,7 +438,6 @@ int run2(int f, bool speedUp) {
 		return -1;
 	}
 	scene.set_speedUp(speedUp);
-	scene.prepare_for_ray_tracing();
 
 	float point[] = { 0,0,0 };
 
@@ -448,6 +461,7 @@ int run2(int f, bool speedUp) {
 	shader.use();
 	glBindVertexArray(VAO);
 
+	cout << "Calculating Ray Tracing..." << endl;
 	clock_t clockStart = clock();
 
 	double time[12];

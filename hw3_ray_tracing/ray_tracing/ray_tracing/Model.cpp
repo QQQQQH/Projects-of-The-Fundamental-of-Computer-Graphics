@@ -52,7 +52,7 @@ void Model::prepare_for_ray_tracing() {
 				glm::vec4 t = model * glm::vec4(
 					pos.x, pos.y, pos.z, 1.0f);
 				faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
-				faces[i].norms[j] = mesh.vertices[mesh.indices[i * 3 + j]].Normal;
+				faces[i].norms[j] = glm::mat3(transpose(inverse(model))) * mesh.vertices[mesh.indices[i * 3 + j]].Normal;
 			}
 			auto
 				ab = faces[i].points[1] - faces[i].points[0],

@@ -29,7 +29,7 @@ void Cube::prepare_for_ray_tracing() {
 				vertices[i * 18 + j * 6 + 1],
 				vertices[i * 18 + j * 6 + 2], 1.0f);
 			faces[i].points[j] = glm::vec3(t.x, t.y, t.z);
-			faces[i].norms[j] = glm::vec3(
+			faces[i].norms[j] = glm::mat3(transpose(inverse(model))) * glm::vec3(
 				vertices[i * 18 + j * 6 + 3],
 				vertices[i * 18 + j * 6 + 4],
 				vertices[i * 18 + j * 6 + 5]);

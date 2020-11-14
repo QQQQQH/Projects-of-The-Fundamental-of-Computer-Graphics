@@ -12,7 +12,7 @@ glm::vec3 Sphere::get_norm(const glm::vec3& p) const {
 Sphere::Sphere(const Material& material0, const glm::vec3& center0, const float& radius0) :
 	Object(material0), center(center0), radius(radius0) {}
 
-bool Sphere::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const {
+bool Sphere::get_intersection(const Ray& ray, float& minT, glm::vec3& norm, bool& inObject) const {
 	glm::vec3
 		src = ray.src,
 		dir = ray.dir,
@@ -39,11 +39,13 @@ bool Sphere::get_intersection(const Ray& ray, float& minT, glm::vec3& norm) cons
 	if (t2 > EPS && t2 < minT) {
 		minT = t2;
 		norm = get_norm(ray.point_at_t(t2));
+		inObject = glm::dot(dir, norm) > 0;
 		return true;
 	}
 	else if (t1 < minT) {
 		minT = t1;
 		norm = get_norm(ray.point_at_t(t1));
+		inObject = glm::dot(dir, norm) > 0;
 		return true;
 	}
 	return false;

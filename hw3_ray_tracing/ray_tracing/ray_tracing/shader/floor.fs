@@ -28,11 +28,11 @@ uniform Light light;
 void main()
 {
     Material material;
-    if(mod(floor(FragPos.x) + floor(FragPos.z), 2) != 0){
-        material.ambient = vec3(0.0);
+    if(mod(floor(FragPos.x * 2) + floor(FragPos.z * 2), 2) != 0){
+        material.ambient = vec3(1.0);
     }
     else{
-        material.ambient = vec3(1.0);
+        material.ambient = vec3(0.0);
     }
 
     material.diffuse = material.ambient;

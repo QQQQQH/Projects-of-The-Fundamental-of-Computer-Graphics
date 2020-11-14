@@ -43,5 +43,5 @@ bool Face::on_face(const glm::vec3& P, float& u, float& v) const {
 }
 
 glm::vec3 Face::cal_norm(float u, float v) const {
-	return (1 - u - v) * norms[0] + v * norms[1] + u * norms[2];
+	return glm::normalize((1 - u - v) * norms[0] + v * norms[1] + u * norms[2]);
 }

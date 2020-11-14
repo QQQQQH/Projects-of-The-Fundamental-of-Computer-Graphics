@@ -2,7 +2,7 @@
 
 const float Scene::INF = 100000000.0f, Scene::EPS = 1e-5;
 
-bool Scene::get_intersection(const Ray& ray, const Object*& collidedObject, glm::vec3& collidedPoint, glm::vec3& norm) {
+bool Scene::get_intersection(const Ray& ray, const Object*& collidedObject, glm::vec3& collidedPoint, glm::vec3& norm, bool& inObject) {
 	float minT = INF;
 	bool intersect = false;
 	for (const auto object : objects) {
@@ -11,8 +11,7 @@ bool Scene::get_intersection(const Ray& ray, const Object*& collidedObject, glm:
 				continue;
 			}
 		}
-		float mintt = minT;
-		bool intersect = object->get_intersection(ray, minT, norm);
+		bool intersect = object->get_intersection(ray, minT, norm, inObject);
 		if (intersect) {
 			collidedObject = object;
 		}
@@ -80,62 +79,59 @@ void Scene::add_object(Object* const object) {
 
 
 void Scene::prepare_for_ray_tracing() {
-	int cnt = 0;
 	for (auto& object : objects) {
 		object->prepare_for_ray_tracing();
-		cnt += object->faces.size();
 	}
 }
 
 glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
-	glm::vec3 lightIntensity(0.0f); // ÓÃÓÚ·µ»ØµÄ¹âÏßÇ¿¶È£¬³õÊ¼»¯Îª0
+	glm::vec3 lightIntensity(0.0f); // ç”¨äºè¿”å›çš„å…‰çº¿å¼ºåº¦ï¼Œåˆå§‹åŒ–ä¸º0
 
-	// µİ¹é½áÊøÌõ¼ş£º³¬¹ı×î´óµİ¹é´ÎÊı
+	// é€’å½’ç»“æŸæ¡ä»¶ï¼šè¶…è¿‡æœ€å¤§é€’å½’æ¬¡æ•°
 	if (recursionStep >= MAX_RECURSION_STEP) {
 		return lightIntensity;
 	}
 
-	// ¼ÆËã¹âÏßÓëÎïÌåµÄ½»µãÒÔ¼°¸ÃÎïÌå
+	// è®¡ç®—å…‰çº¿ä¸ç‰©ä½“çš„äº¤ç‚¹ä»¥åŠè¯¥ç‰©ä½“
 	const Object* collidedObject = nullptr;
 	glm::vec3 collidedPoint, norm;
+	bool inObject = false;
 
-	// µİ¹é½áÊøÌõ¼ş£º¹âÏßÃ»ÓĞÕÕÉäµ½ÎïÌåÉÏ
-	if (!get_intersection(ray, collidedObject, collidedPoint, norm)) {
+	// é€’å½’ç»“æŸæ¡ä»¶ï¼šå…‰çº¿æ²¡æœ‰ç…§å°„åˆ°ç‰©ä½“ä¸Š
+	if (!get_intersection(ray, collidedObject, collidedPoint, norm, inObject)) {
 		return lightIntensity;
 	}
 
-	bool inObject = glm::dot(ray.dir, norm) > 0;
-
 	if (inObject) {
-		// Èô¹âÏßÊÇ´ÓÎïÌåÄÚ²¿Éä³öµÄ£¬·¨ÏòÁ¿Ó¦¸ÃÈ¡·´
+		// è‹¥å…‰çº¿æ˜¯ä»ç‰©ä½“å†…éƒ¨å°„å‡ºçš„ï¼Œæ³•å‘é‡åº”è¯¥å–å
 		norm = -norm;
 	}
 
-	// ¹âÕÕÇ¿¶ÈµÄµÚÒ»²¿·Ö£º¾Ö²¿¹âÕÕÇ¿¶È
+	// å…‰ç…§å¼ºåº¦çš„ç¬¬ä¸€éƒ¨åˆ†ï¼šå±€éƒ¨å…‰ç…§å¼ºåº¦
 	if (!inObject && collidedObject->kShade() > EPS) {
 		lightIntensity = collidedObject->kShade() *
 			shade(*collidedObject, collidedPoint, norm, ray);
 	}
 
-	// ¹âÕÕÇ¿¶ÈµÄµÚ¶ş²¿·Ö£º·´Éä¹âÕÕÇ¿¶È
+	// å…‰ç…§å¼ºåº¦çš„ç¬¬äºŒéƒ¨åˆ†ï¼šåå°„å…‰ç…§å¼ºåº¦
 	if (collidedObject->kReflect() > EPS) { // > 0
-		// ¼ÆËã·´Éä·½Ïò
+		// è®¡ç®—åå°„æ–¹å‘
 		glm::vec3 reflectDirection = glm::reflect(ray.dir, norm);
 		lightIntensity += collidedObject->kReflect() *
 			trace_ray(Ray(collidedPoint, collidedPoint + reflectDirection), recursionStep + 1);
 	}
 
-	// ¹âÕÕÇ¿¶ÈµÄµÚÈı²¿·Ö£ºÕÛÉä¹âÕÕÇ¿¶È
+	// å…‰ç…§å¼ºåº¦çš„ç¬¬ä¸‰éƒ¨åˆ†ï¼šæŠ˜å°„å…‰ç…§å¼ºåº¦
 	if (collidedObject->kRefract() > EPS) { // > 0
-		// ¼ÆËãÕÛÉäÂÊ
+		// è®¡ç®—æŠ˜å°„ç‡
 		float currentIndex = 1.0f;
 		float nextIndex = collidedObject->refractiveIndex();
 		if (inObject) {
-			// Èô¹âÏßÊÇ´ÓÎïÌåÄÚ²¿Éä³öµÄ£¬ÕÛÉäÂÊĞèÒª½øĞĞ½»»»
+			// è‹¥å…‰çº¿æ˜¯ä»ç‰©ä½“å†…éƒ¨å°„å‡ºçš„ï¼ŒæŠ˜å°„ç‡éœ€è¦è¿›è¡Œäº¤æ¢
 			std::swap(currentIndex, nextIndex);
 		}
 
-		// ¼ÆËãÕÛÉä·½Ïò
+		// è®¡ç®—æŠ˜å°„æ–¹å‘
 		glm::vec3 refractDirection = glm::refract(ray.dir, norm, currentIndex / nextIndex);
 
 		if (!isnan(refractDirection.x)) {

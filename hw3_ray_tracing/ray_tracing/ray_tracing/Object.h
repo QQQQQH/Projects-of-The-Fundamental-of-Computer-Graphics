@@ -47,7 +47,7 @@ public:
 	void set_model(const glm::mat4& model0);
 	bool intersect_AABB(const Ray& ray) const;
 
-	virtual bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const;
+	virtual bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm, bool& inObject) const;
 	virtual bool intersected(const Ray& ray) const;
 	virtual void prepare_for_ray_tracing() = 0;
 	virtual void Draw(Shader& shader) const = 0;
@@ -89,7 +89,7 @@ public:
 	Sphere(const Material& material0, const glm::vec3& center0 = glm::vec3(0), const float& radius0 = 1);
 
 	void set_center_radius(const glm::vec3& center0, const float& radius0 = 1) { center = center0, radius = radius0; }
-	bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm) const;
+	bool get_intersection(const Ray& ray, float& minT, glm::vec3& norm, bool& inObject) const;
 	bool intersected(const Ray& ray) const;
 	void prepare_for_ray_tracing();
 	void Draw(Shader& shader) const;

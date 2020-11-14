@@ -18,7 +18,7 @@ class Scene {
 	int cnt = 0;
 	bool speedUp = false;
 
-	bool get_intersection(const Ray& ray, const Object*& collidedObject, glm::vec3& collidedPoint, glm::vec3& norm);
+	bool get_intersection(const Ray& ray, const Object*& collidedObject, glm::vec3& collidedPoint, glm::vec3& norm, bool& inObject);
 	bool intersected(const Ray& ray) const;
 	glm::vec3 shade(const Object& object, const glm::vec3& pos, const glm::vec3& norm, const Ray& ray);
 public:

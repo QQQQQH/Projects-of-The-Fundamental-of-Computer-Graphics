@@ -33,10 +33,10 @@ public:
 	Object(const Material& material0) :material(material0) {}
 
 	virtual glm::vec3 ambient(const glm::vec3& p) const { return material.ambient; }
-	virtual glm::vec3 diffuse(const glm::vec3& p) const { return material.ambient; }
+	virtual glm::vec3 diffuse(const glm::vec3& p) const { return material.diffuse; }
 	virtual glm::vec3 specular(const glm::vec3& p) const { return material.specular; }
 	glm::vec3 ambient() const { return material.ambient; }
-	glm::vec3 diffuse() const { return material.ambient; }
+	glm::vec3 diffuse() const { return material.diffuse; }
 	glm::vec3 specular() const { return material.specular; }
 	float shininess() const { return material.shininess; }
 	float kShade() const { return material.kShade; }

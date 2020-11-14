@@ -37,14 +37,23 @@ void Material::set_full_refract() {
 	kRefract = 1.0f;
 }
 
-void Material::set_gold() {
-	//ambient = glm::vec3(0.24725f, 0.1995f, 0.0745f);
-	//diffuse = glm::vec3(0.75164f, 0.60648f, 0.22648f);
-	//specular = glm::vec3(0.628281f, 0.555802f, 0.366065f);
-	//shininess = 0.4 * 128;
+void Material::set_whit_plastic() {
+	ambient = glm::vec3(0.0);
+	diffuse = glm::vec3(0.55);
+	specular = glm::vec3(0.7);
+	shininess = 0.25 * 128;
+}
 
-	ambient = glm::vec3(0.2125, 0.1275, 0.054);
-	diffuse = glm::vec3(0.714, 0.4284, 0.18144);
-	specular = glm::vec3(0.393548, 0.271906, 0.166721);
-	shininess = 0.2 * 128;
+void Material::set_cyan_rubber() {
+	ambient = glm::vec3(0.0, 0.05, 0.05);
+	diffuse = glm::vec3(0.4, 0.5, 0.5);
+	specular = glm::vec3(0.04, 0.7, 0.7);
+	shininess = 0.078125 * 128;
+}
+
+void Material::set_jade() {
+	ambient = glm::vec3(0.135, 0.2225, 0.1575);
+	diffuse = glm::vec3(0.54, 0.89, 0.63);
+	specular = glm::vec3(0.316228, 0.316228, 0.316228);
+	shininess = 0.1 * 128;
 }

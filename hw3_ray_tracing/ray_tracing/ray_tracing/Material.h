@@ -29,6 +29,9 @@ public:
 	void set_smooth();
 	void set_full_reflect();
 	void set_full_refract();
+	void set_whit_plastic();
+	void set_cyan_rubber();
+	void set_jade();
 
 	void set_gold();
 };

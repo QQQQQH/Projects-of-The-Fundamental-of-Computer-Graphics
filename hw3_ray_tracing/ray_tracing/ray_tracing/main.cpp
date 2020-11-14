@@ -83,7 +83,8 @@ int main() {
 			while (true) {
 				cout << "Please Select:\n"
 					<< "1. Only 1 cube\n"
-					<< "2. Models\n" << endl;
+					<< "2. Models\n"
+					<< "3. Models (Hight Res)\n" << endl;
 				cin >> in;
 				cout << endl;
 				if (in == "1") {
@@ -91,6 +92,9 @@ int main() {
 				}
 				else if (in == "2") {
 					return run1(2);
+				}
+				else if (in == "3") {
+					return run1(3);
 				}
 			}
 		}
@@ -168,7 +172,7 @@ bool prepare(int f) {
 		camera.set_yaw(-137.0f);
 		camera.set_pitch(-30.0f);
 
-		scene.set_light_pos(glm::vec3(0.0f, 10.0f, 0.0f));
+		scene.set_light_pos(glm::vec3(4.0f, 10.0f, 4.0f));
 
 		vector <Object*> objects;
 
@@ -215,6 +219,8 @@ bool prepare(int f) {
 				rgb[i][2] / 255));
 			scene.add_object(objects[i]);
 		}
+		happy->material.set_jade();
+		dragon->material.set_whit_plastic();
 
 		Object* ball1 = new Sphere(fullRefractMaterial, glm::vec3(4, 1, 0), 1);
 		Object* ball2 = new Sphere(fullReflectMaterial, glm::vec3(0, 1, 4), 1);
@@ -412,6 +418,7 @@ int run1(int f) {
 		}
 
 		// draw the lamp object
+
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);

@@ -85,35 +85,31 @@ void Scene::prepare_for_ray_tracing() {
 }
 
 glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
-	glm::vec3 lightIntensity(0.0f); // 用于返回的光线强度，初始化为0
+	glm::vec3 lightIntensity(0.0f);
 
-	// 递归结束条件：超过最大递归次数
 	if (recursionStep >= MAX_RECURSION_STEP) {
 		return lightIntensity;
 	}
 
-	// 计算光线与物体的交点以及该物体
 	const Object* collidedObject = nullptr;
 	glm::vec3 collidedPoint, norm;
 	bool inObject = false;
 
-	// 递归结束条件：光线没有照射到物体上
 	if (!get_intersection(ray, collidedObject, collidedPoint, norm, inObject)) {
 		return lightIntensity;
 	}
 
 	if (inObject) {
-		// 若光线是从物体内部射出的，法向量应该取反
 		norm = -norm;
 	}
 
-	// 光照强度的第一部分：局部光照强度
+	// 1. 局部光照强度
 	if (!inObject && collidedObject->kShade() > EPS) {
 		lightIntensity = collidedObject->kShade() *
 			shade(*collidedObject, collidedPoint, norm, ray);
 	}
 
-	// 光照强度的第二部分：反射光照强度
+	// 2. 反射光照强度
 	if (collidedObject->kReflect() > EPS) { // > 0
 		// 计算反射方向
 		glm::vec3 reflectDirection = glm::reflect(ray.dir, norm);
@@ -121,17 +117,14 @@ glm::vec3 Scene::trace_ray(const Ray& ray, unsigned int recursionStep) {
 			trace_ray(Ray(collidedPoint, collidedPoint + reflectDirection), recursionStep + 1);
 	}
 
-	// 光照强度的第三部分：折射光照强度
+	// 3. 折射光照强度
 	if (collidedObject->kRefract() > EPS) { // > 0
-		// 计算折射率
 		float currentIndex = 1.0f;
 		float nextIndex = collidedObject->refractiveIndex();
 		if (inObject) {
-			// 若光线是从物体内部射出的，折射率需要进行交换
 			std::swap(currentIndex, nextIndex);
 		}
 
-		// 计算折射方向
 		glm::vec3 refractDirection = glm::refract(ray.dir, norm, currentIndex / nextIndex);
 
 		if (!isnan(refractDirection.x)) {
